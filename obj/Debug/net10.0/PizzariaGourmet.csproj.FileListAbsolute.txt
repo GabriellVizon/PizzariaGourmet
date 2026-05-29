@@ -65,7 +65,6 @@ C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\rjimswa.dswa.cache.json
 C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\rjsmrazor.dswa.cache.json
 C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json
 C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\scopedcss\bundle\PizzariaGourmet.styles.css
-C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\compressed\auo8ion5ip-{0}-hbho8svaq6-hbho8svaq6.gz
 C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\compressed\g2gl2hvfbz-{0}-fbc841awxc-fbc841awxc.gz
 C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\staticwebassets.build.json
 C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\staticwebassets.build.json.cache
@@ -79,3 +78,5 @@ C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\PizzariaGourmet.pdb
 C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\PizzariaGourmet.genruntimeconfig.cache
 C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\ref\PizzariaGourmet.dll
 C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\PizzariaGourmet.sourcelink.json
+C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\compressed\auo8ion5ip-{0}-hrunvu9t4j-hrunvu9t4j.gz
+C:\Users\Etec\Desktop\PizzariaGourmet\obj\Debug\net10.0\compressed\er9aij8d73-{0}-kwyoargvxn-kwyoargvxn.gz

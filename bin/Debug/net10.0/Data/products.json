@@ -1,5 +1,44 @@
 [
-  { "id": 1, "name": "Pizza Maracanã 1 Sabor", "size": "45 cm", "price": 85.00, "image": "/images/pizza1.jpg", "description": "Pizza grande deliciosa" },
-  { "id": 2, "name": "Pizza G 1 sabor", "size": "35 cm", "price": 65.00, "image": "/images/pizza2.jpg", "description": "Clássica e saborosa" },
-  { "id": 3, "name": "Tábua MIX Gourmet", "size": "porção", "price": 139.90, "image": "/images/tabua.jpg", "description": "Mix de petiscos" }
+  {
+    "id": 1,
+    "name": "Pizza Margherita",
+    "description": "Molho de tomate, muçarela e manjericão fresco.",
+    "price": 34.90,
+    "image": "https://picsum.photos/seed/pizza1/600/400"
+  },
+  {
+    "id": 2,
+    "name": "Pizza Calabresa",
+    "description": "Calabresa fatiada, cebola e azeitonas.",
+    "price": 38.50,
+    "image": "https://picsum.photos/seed/pizza2/600/400"
+  },
+  {
+    "id": 3,
+    "name": "Pizza Portuguesa",
+    "description": "Presunto, ovos, cebola, ervilha e azeitona.",
+    "price": 42.00,
+    "image": "https://picsum.photos/seed/pizza3/600/400"
+  },
+  {
+    "id": 4,
+    "name": "Pizza Quatro Queijos",
+    "description": "Muçarela, provolone, gorgonzola e parmesão.",
+    "price": 45.00,
+    "image": "https://picsum.photos/seed/pizza4/600/400"
+  },
+  {
+    "id": 5,
+    "name": "Pizza Frango com Catupiry",
+    "description": "Frango desfiado e catupiry cremoso.",
+    "price": 40.00,
+    "image": "https://picsum.photos/seed/pizza5/600/400"
+  },
+  {
+    "id": 6,
+    "name": "Pizza Vegetariana",
+    "description": "Legumes assados e queijo leve.",
+    "price": 36.50,
+    "image": "https://picsum.photos/seed/pizza6/600/400"
+  }
 ]
