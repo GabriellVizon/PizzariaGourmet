@@ -1,0 +1,52 @@
+@page
+@{
+  Layout = "_Layout";
+}
+
+<h2>Checkout</h2>
+<form id="checkout-form">
+  <label>Nome</label>
+  <input name="name" required />
+  <label>Telefone</label>
+  <input name="phone" required />
+  <label>Endereço</label>
+  <input name="address" required />
+  <label>Observações (opcional)</label>
+  <textarea name="notes"></textarea>
+  <div style="margin-top:10px">
+    <button type="submit">Pagar / Enviar pedido</button>
+  </div>
+</form>
+
+<div id="checkout-result"></div>
+
+<script>
+document.getElementById('checkout-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const data = new FormData(e.target);
+  const payload = {
+    customer: {
+      name: data.get('name'),
+      phone: data.get('phone'),
+      address: data.get('address'),
+      notes: data.get('notes')
+    },
+    cart: JSON.parse(localStorage.getItem('cart')||'[]')
+  };
+  if(payload.cart.length===0){ alert('Carrinho vazio'); return }
+
+  // Criar sessão de checkout no servidor (Stripe) e redirecionar para a URL retornada
+  const res = await fetch('/create-checkout-session',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+  const json = await res.json();
+  if(json?.url){
+    // redireciona para Stripe Checkout
+    window.location = json.url;
+  } else {
+    document.getElementById('checkout-result').innerText = json.error || JSON.stringify(json);
+  }
+});
+</script>

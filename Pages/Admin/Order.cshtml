@@ -1,0 +1,25 @@
+@page
+@model OrderModel
+@{
+    Layout = "_Layout";
+}
+
+<h2>Pedido @Model.Id</h2>
+
+<div>
+  <p><strong>Criado:</strong> @Model.CreatedAt</p>
+  <p><strong>Status:</strong> @Model.Status</p>
+  <h3>Payload</h3>
+  <pre>@Model.Payload</pre>
+</div>
+
+<form method="post">
+  <label>Atualizar status:</label>
+  <select name="status">
+    <option value="pending" selected="@(Model.Status=="pending")">pending</option>
+    <option value="paid" selected="@(Model.Status=="paid")">paid</option>
+    <option value="cancelled" selected="@(Model.Status=="cancelled")">cancelled</option>
+  </select>
+  <button type="submit">Salvar</button>
+  <button type="submit" formaction="?delete=1">Deletar</button>
+</form>

@@ -1,0 +1,23 @@
+@page
+@model OrdersModel
+@{
+    Layout = "_Layout";
+}
+
+<h2>Pedidos</h2>
+
+<table>
+  <thead><tr><th>Id</th><th>Criado</th><th>Status</th><th>Ações</th></tr></thead>
+  <tbody>
+  @foreach(var o in Model.Orders){
+    <tr>
+      <td>@o.Id</td>
+      <td>@o.CreatedAt</td>
+      <td>@o.Status</td>
+      <td>
+        <a href="/Admin/Order?id=@o.Id">Ver</a>
+      </td>
+    </tr>
+  }
+  </tbody>
+</table>

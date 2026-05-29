@@ -1,0 +1,23 @@
+@page
+@{
+  Layout = "_Layout";
+}
+
+<h2>Sucesso</h2>
+<div id="success-message">Verificando sessão...</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const sessionId = params.get('session_id');
+if(!sessionId){ document.getElementById('success-message').innerText = 'Sessão não encontrada.'; }
+else{
+  (async ()=>{
+    const res = await fetch('/session/' + encodeURIComponent(sessionId));
+    const json = await res.json();
+    if(json.error){ document.getElementById('success-message').innerText = json.error; return }
+    document.getElementById('success-message').innerHTML = `Pagamento confirmado. ID da sessão: <b>${json.id}</b>`;
+    // limpar carrinho local
+    localStorage.removeItem('cart');
+  })();
+}
+</script>

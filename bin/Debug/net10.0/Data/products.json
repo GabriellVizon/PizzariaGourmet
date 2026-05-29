@@ -1,0 +1,5 @@
+[
+  { "id": 1, "name": "Pizza Maracanã 1 Sabor", "size": "45 cm", "price": 85.00, "image": "/images/pizza1.jpg", "description": "Pizza grande deliciosa" },
+  { "id": 2, "name": "Pizza G 1 sabor", "size": "35 cm", "price": 65.00, "image": "/images/pizza2.jpg", "description": "Clássica e saborosa" },
+  { "id": 3, "name": "Tábua MIX Gourmet", "size": "porção", "price": 139.90, "image": "/images/tabua.jpg", "description": "Mix de petiscos" }
+]
