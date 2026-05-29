@@ -15,12 +15,82 @@ app.UseRouting();
 app.MapRazorPages();
 
 // Produtos (arquivo JSON estático)
+// Products CRUD (file-backed)
+record Product(int Id, string Name, string Description, decimal Price, string Image);
+
+static string ProductsPath() => Path.Combine(AppContext.BaseDirectory, "Data", "products.json");
+
+static async Task<List<Product>> ReadProductsAsync()
+{
+    var path = ProductsPath();
+    if (!System.IO.File.Exists(path)) return new List<Product>();
+    var json = await System.IO.File.ReadAllTextAsync(path);
+    try { return JsonSerializer.Deserialize<List<Product>>(json) ?? new List<Product>(); } catch { return new List<Product>(); }
+}
+
+static async Task WriteProductsAsync(List<Product> list)
+{
+    Directory.CreateDirectory(Path.GetDirectoryName(ProductsPath())!);
+    var opts = new JsonSerializerOptions { WriteIndented = true };
+    await System.IO.File.WriteAllTextAsync(ProductsPath(), JsonSerializer.Serialize(list, opts));
+}
+
 app.MapGet("/api/products", async () =>
 {
-    var path = Path.Combine(AppContext.BaseDirectory, "Data", "products.json");
-    if (!System.IO.File.Exists(path)) return Results.NotFound();
-    var json = await System.IO.File.ReadAllTextAsync(path);
-    return Results.Content(json, "application/json");
+    var list = await ReadProductsAsync();
+    return Results.Json(list);
+});
+
+app.MapGet("/api/products/{id}", async (int id) =>
+{
+    var list = await ReadProductsAsync();
+    var p = list.FirstOrDefault(x => x.Id == id);
+    return p is null ? Results.NotFound() : Results.Json(p);
+});
+
+app.MapPost("/api/products", async (HttpRequest req) =>
+{
+    using var sr = new StreamReader(req.Body);
+    var body = await sr.ReadToEndAsync();
+    var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(body) ? "{}" : body);
+    var name = doc.RootElement.GetProperty("name").GetString() ?? "Produto";
+    var desc = doc.RootElement.TryGetProperty("description", out var d) ? d.GetString() ?? "" : "";
+    var price = doc.RootElement.TryGetProperty("price", out var p) && p.TryGetDecimal(out var pd) ? pd : 0m;
+    var image = doc.RootElement.TryGetProperty("image", out var im) ? im.GetString() ?? "" : "";
+
+    var list = await ReadProductsAsync();
+    var nextId = list.Any() ? list.Max(x => x.Id) + 1 : 1;
+    var prod = new Product(nextId, name, desc, price, image);
+    list.Add(prod);
+    await WriteProductsAsync(list);
+    return Results.Created($"/api/products/{prod.Id}", prod);
+});
+
+app.MapPut("/api/products/{id}", async (int id, HttpRequest req) =>
+{
+    using var sr = new StreamReader(req.Body);
+    var body = await sr.ReadToEndAsync();
+    var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(body) ? "{}" : body);
+    var list = await ReadProductsAsync();
+    var idx = list.FindIndex(x => x.Id == id);
+    if (idx < 0) return Results.NotFound();
+    var name = doc.RootElement.TryGetProperty("name", out var n) ? n.GetString() ?? list[idx].Name : list[idx].Name;
+    var desc = doc.RootElement.TryGetProperty("description", out var d) ? d.GetString() ?? list[idx].Description : list[idx].Description;
+    var price = doc.RootElement.TryGetProperty("price", out var p) && p.TryGetDecimal(out var pd) ? pd : list[idx].Price;
+    var image = doc.RootElement.TryGetProperty("image", out var im) ? im.GetString() ?? list[idx].Image : list[idx].Image;
+    list[idx] = new Product(id, name, desc, price, image);
+    await WriteProductsAsync(list);
+    return Results.Ok(list[idx]);
+});
+
+app.MapDelete("/api/products/{id}", async (int id) =>
+{
+    var list = await ReadProductsAsync();
+    var idx = list.FindIndex(x => x.Id == id);
+    if (idx < 0) return Results.NotFound();
+    list.RemoveAt(idx);
+    await WriteProductsAsync(list);
+    return Results.Ok();
 });
 
 // Endpoint de checkout simples (mock) mantido para compatibilidade
