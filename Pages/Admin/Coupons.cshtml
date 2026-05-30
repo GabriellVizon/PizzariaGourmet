@@ -7,9 +7,9 @@
 
 <div class="admin-page">
   <div class="container">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px">
         <h2 style="margin:0">🎫 Cupons de Desconto</h2>
-        <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
           <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">Dashboard</a>
           <a href="/Admin/Orders" style="color:var(--text-light);font-weight:600;text-decoration:none">Pedidos</a>
           <a href="/Admin/Products" style="color:var(--brand);font-weight:600;text-decoration:none">Produtos</a>
@@ -22,7 +22,7 @@
     <div class="admin-panel">
       <form id="coupon-form">
         <input type="hidden" name="id" />
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
           <div>
             <label>Código</label>
             <input name="code" required placeholder="Ex: PIZZA10" />

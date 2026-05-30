@@ -45,7 +45,7 @@ Acesse em http://localhost:5000
 - **Dashboard** — Resumo com pedidos pendentes, hoje, faturamento, + notificação sonora de novos pedidos (polling a cada 30s)
 - **Pedidos** — Lista com filtros (nome, telefone, status, data), detalhes, atualização de status, impressão, exclusão
 - **Confirmação manual PIX/Dinheiro** — Botão em destaque para marcar pagamento como recebido
-- **Produtos** — CRUD completo com upload de imagens e editor de tamanhos (P/M/G)
+- **Produtos** — CRUD completo com upload de imagens e editor de tamanhos (P/M/G/MR)
 - **Complementos** — CRUD de ingredientes extras
 - **Cupons** — CRUD com código, tipo (percentual/fixo), valor, pedido mínimo, validade, usos máximos
 - **Configurações** — Taxa de entrega, frete grátis, WhatsApp da loja, chave PIX, nome da loja

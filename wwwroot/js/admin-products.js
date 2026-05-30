@@ -59,7 +59,7 @@ async function loadAdminProducts() {
     const res = await fetch('/api/products');
     const list = await res.json();
     if (!list.length) { el.innerText = 'Nenhum produto cadastrado.'; return; }
-    el.innerHTML = `<table class="admin-table">
+    el.innerHTML = `<div class="admin-table-wrap"><table class="admin-table">
       <thead>
         <tr>
           <th>Id</th>
@@ -85,7 +85,7 @@ async function loadAdminProducts() {
           </td>
         </tr>`).join('')}
       </tbody>
-    </table>`;
+    </table></div>`;
 
     document.querySelectorAll('.btn-edit').forEach(b => b.addEventListener('click', async (e) => {
       const id = Number(e.currentTarget.dataset.id);

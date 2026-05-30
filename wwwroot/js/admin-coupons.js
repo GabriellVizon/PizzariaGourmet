@@ -5,7 +5,7 @@ async function loadAdminCoupons() {
     const res = await fetch('/api/coupons');
     const list = await res.json();
     if (!list.length) { el.innerText = 'Nenhum cupom cadastrado.'; return; }
-    el.innerHTML = `<table class="admin-table">
+    el.innerHTML = `<div class="admin-table-wrap"><table class="admin-table">
       <thead>
         <tr>
           <th>Código</th>
@@ -35,7 +35,7 @@ async function loadAdminCoupons() {
           </td>
         </tr>`).join('')}
       </tbody>
-    </table>`;
+    </table></div>`;
 
     document.querySelectorAll('.btn-edit').forEach(b => b.addEventListener('click', async (e) => {
       const id = Number(e.currentTarget.dataset.id);

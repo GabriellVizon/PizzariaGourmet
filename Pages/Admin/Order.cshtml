@@ -12,7 +12,7 @@
     </div>
 
     <div class="admin-panel">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
         <div>
           <p><strong>Cliente:</strong> @Model.CustomerName</p>
           <p><strong>Telefone:</strong> @Model.CustomerPhone</p>
@@ -34,6 +34,7 @@
 
     <div class="admin-panel">
       <h3>Itens do Pedido</h3>
+      <div class="admin-table-wrap">
       <table class="admin-table">
         <thead>
           <tr>
@@ -69,6 +70,7 @@
           }
         </tbody>
       </table>
+      </div>
       <div style="margin-top:16px;border-top:2px solid var(--text);padding-top:12px">
         <p><strong>Subtotal:</strong> R$ @Model.Subtotal.ToString("F2")</p>
         @if (Model.Discount > 0)
@@ -102,7 +104,7 @@
     <form method="post" class="admin-panel">
       @Html.AntiForgeryToken()
       <h3>Atualizar Status</h3>
-      <div style="display:flex;gap:12px;align-items:end">
+      <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
         <div style="flex:1">
           <label for="status">Status</label>
           <select id="status" name="status">

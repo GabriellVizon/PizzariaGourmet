@@ -6,7 +6,7 @@
 
 <div class="admin-page">
   <div class="container">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px">
       <h2 style="margin:0">📦 Pedidos</h2>
       <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
         <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">Dashboard</a>
@@ -62,7 +62,8 @@
     }
     else
     {
-      <div class="admin-panel" style="padding:0;overflow-x:auto">
+      <div class="admin-panel" style="padding:0">
+        <div class="admin-table-wrap">
         <table class="admin-table">
           <thead>
             <tr>
@@ -101,6 +102,7 @@
             }
           </tbody>
         </table>
+        </div>
         <div style="padding:12px;text-align:center;font-size:0.85rem;color:var(--text-light)">
           Total: @Model.Orders.Count pedido(s)
         </div>
