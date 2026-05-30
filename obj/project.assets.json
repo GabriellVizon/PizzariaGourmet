@@ -3188,7 +3188,7 @@
       "Microsoft.EntityFrameworkCore.Design >= 10.0.8",
       "Microsoft.EntityFrameworkCore.Sqlite >= 10.0.8",
       "Stripe.net >= 42.0.0",
-      "Twilio >= 5.92.0"
+      "Twilio >= 6.0.0"
     ]
   },
   "packageFolders": {
@@ -3258,7 +3258,7 @@
           },
           "Twilio": {
             "target": "Package",
-            "version": "[5.92.0, )"
+            "version": "[6.0.0, )"
           }
         },
         "imports": [
@@ -3699,16 +3699,6 @@
     }
   },
   "logs": [
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "PizzariaGourmet depends on Twilio (>= 5.92.0) but Twilio 5.92.0 was not found. Twilio 6.0.0 was resolved instead.",
-      "libraryId": "Twilio",
-      "targetGraphs": [
-        "net10.0"
-      ]
-    },
     {
       "code": "NU1902",
       "level": "Warning",

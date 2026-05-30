@@ -17,6 +17,6 @@
     <PackageReference Include="MailKit" Version="4.1.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Twilio" Version="5.92.0" />
+    <PackageReference Include="Twilio" Version="6.0.0" />
   </ItemGroup>
 </Project>

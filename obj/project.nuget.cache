@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "MbwRaMYCs2U=",
+  "dgSpecHash": "8rYm0wY0Zt4=",
   "success": true,
   "projectFilePath": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\PizzariaGourmet\\PizzariaGourmet.csproj",
   "expectedPackageFiles": [
@@ -55,18 +55,6 @@
     "C:\\Users\\gabri\\.nuget\\packages\\twilio\\6.0.0\\twilio.6.0.0.nupkg.sha512"
   ],
   "logs": [
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "message": "PizzariaGourmet depends on Twilio (>= 5.92.0) but Twilio 5.92.0 was not found. Twilio 6.0.0 was resolved instead.",
-      "projectPath": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\PizzariaGourmet\\PizzariaGourmet.csproj",
-      "warningLevel": 1,
-      "filePath": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\PizzariaGourmet\\PizzariaGourmet.csproj",
-      "libraryId": "Twilio",
-      "targetGraphs": [
-        "net10.0"
-      ]
-    },
     {
       "code": "NU1902",
       "level": "Warning",

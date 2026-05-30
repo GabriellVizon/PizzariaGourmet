@@ -59,6 +59,50 @@
             </div>
           </div>
 
+          <div class="payment-detail payment-detail-card" id="payment-detail-card">
+            <div class="card-row">
+              <div class="form-group card-full">
+                <label for="card-number">Número do Cartão</label>
+                <input id="card-number" name="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19" />
+              </div>
+            </div>
+            <div class="card-row">
+              <div class="form-group card-full">
+                <label for="card-name">Nome no Cartão</label>
+                <input id="card-name" name="cardName" placeholder="Nome como está no cartão" />
+              </div>
+            </div>
+            <div class="card-row">
+              <div class="form-group">
+                <label for="card-expiry">Validade</label>
+                <input id="card-expiry" name="cardExpiry" placeholder="MM/AA" maxlength="5" />
+              </div>
+              <div class="form-group">
+                <label for="card-cvv">CVV</label>
+                <input id="card-cvv" name="cardCvv" type="text" inputmode="numeric" placeholder="123" maxlength="4" />
+              </div>
+            </div>
+          </div>
+
+          <div class="payment-detail payment-detail-pix" id="payment-detail-pix">
+            <div class="pix-qr-placeholder">
+              <div class="pix-qr-box" id="pix-qr-box"></div>
+              <p class="pix-instruction">Escaneie o código QR abaixo com seu aplicativo do banco</p>
+              <span class="pix-key-text">contato@pizzariagourmet.com</span>
+            </div>
+          </div>
+
+          <div class="payment-detail payment-detail-cash" id="payment-detail-cash">
+            <div class="cash-input-row">
+              <label for="cash-amount">Valor recebido</label>
+              <input id="cash-amount" name="cashAmount" type="number" step="0.01" min="0" placeholder="R$ 0,00" />
+            </div>
+            <div class="cash-change-display" id="cash-change-display">
+              <div class="cash-change-label">Troco</div>
+              <div class="cash-change-amount" id="cash-change-amount">R$ 0,00</div>
+            </div>
+          </div>
+
           <div style="margin-top:24px">
             <button type="submit" class="btn-checkout">
               Confirmar Pedido →
@@ -154,9 +198,76 @@ function renderCheckoutSummary() {
     el.addEventListener('click', () => {
       document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
       el.classList.add('selected');
-      document.getElementById('payment-method').value = el.dataset.method;
+      const method = el.dataset.method;
+      document.getElementById('payment-method').value = method;
+
+      document.querySelectorAll('.payment-detail').forEach(d => d.classList.remove('active'));
+      const detailEl = document.getElementById('payment-detail-' + method);
+      if (detailEl) detailEl.classList.add('active');
+
+      if (method === 'pix') generatePixQrCode();
+      if (method === 'cash') updateCashChange();
     });
   });
+
+  function getTotal() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const subtotal = cart.reduce((s, i) => s + getItemTotal(i), 0);
+    const delivery = getBaseSubtotal(cart) >= FREE_DELIVERY_MIN ? 0 : DELIVERY_FEE;
+    return subtotal + delivery;
+  }
+
+  function updateCashChange() {
+    const total = getTotal();
+    const input = document.getElementById('cash-amount');
+    const display = document.getElementById('cash-change-display');
+    const amountEl = document.getElementById('cash-change-amount');
+    const paid = parseFloat(input.value) || 0;
+    if (paid >= total) {
+      const change = paid - total;
+      amountEl.textContent = 'R$ ' + formatPrice(change);
+      display.classList.add('active');
+    } else {
+      display.classList.remove('active');
+    }
+  }
+
+  document.getElementById('cash-amount')?.addEventListener('input', updateCashChange);
+
+  function formatCardNumber(v) {
+    return v.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
+  }
+
+  document.getElementById('card-number')?.addEventListener('input', function() {
+    this.value = formatCardNumber(this.value);
+  });
+
+  document.getElementById('card-expiry')?.addEventListener('input', function() {
+    let v = this.value.replace(/\D/g, '');
+    if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2,4);
+    this.value = v;
+  });
+
+  document.getElementById('payment-detail-card')?.classList.add('active');
+
+  function generatePixQrCode() {
+    const box = document.getElementById('pix-qr-box');
+    if (box.querySelector('img')) return;
+    const total = getTotal();
+    const pixKey = 'contato@pizzariagourmet.com';
+    const payload = '00020101021226880014BR.GOV.BCB.PIX0136' + pixKey + '52040000530398654' + total.toFixed(2).replace('.', '') + '5802BR5913PizzariaGourmet6008Sao Paulo62070503***6304';
+    const img = document.createElement('img');
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(payload);
+    img.alt = 'QR Code PIX';
+    img.style.width = '200px';
+    img.style.height = '200px';
+    img.onerror = function() {
+      this.onerror = null;
+      box.innerHTML = '<div style="font-size:3rem;opacity:0.3;text-align:center;padding:20px">📱<br><span style="font-size:0.9rem">QR Code indisponível</span></div>';
+    };
+    box.innerHTML = '';
+    box.appendChild(img);
+  }
 })();
 
 document.getElementById('checkout-form').addEventListener('submit', async (e) => {

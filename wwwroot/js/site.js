@@ -504,11 +504,5 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.top-nav')?.classList.toggle('open');
   });
 
-  document.querySelectorAll('.payment-option')?.forEach(opt => {
-    opt.addEventListener('click', () => {
-      document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
-      opt.classList.add('selected');
-      document.getElementById('payment-method').value = opt.dataset.method;
-    });
-  });
+
 });
