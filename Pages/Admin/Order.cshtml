@@ -16,6 +16,7 @@
         <div>
           <p><strong>Cliente:</strong> @Model.CustomerName</p>
           <p><strong>Telefone:</strong> @Model.CustomerPhone</p>
+          <p><strong>E-mail:</strong> @Model.CustomerEmail</p>
           <p><strong>Endereço:</strong> @Model.CustomerAddress</p>
           <p><strong>CPF:</strong> @Model.CustomerCPF</p>
         </div>
@@ -78,6 +79,25 @@
         <p style="font-size:1.1rem"><strong>Total:</strong> R$ @Model.Total.ToString("F2")</p>
       </div>
     </div>
+
+    @if (Model.Status == "pending" && (Model.PaymentMethod == "pix" || Model.PaymentMethod == "cash"))
+    {
+      <div class="admin-panel" style="border:2px solid var(--accent);background:#fff9e6">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <div style="flex:1">
+            <strong style="font-size:1.1rem">💰 Pagamento @(Model.PaymentMethod == "pix" ? "PIX" : "em Dinheiro") pendente</strong>
+            <p style="margin:4px 0 0;color:var(--text-light);font-size:0.85rem">Confirme manualmente quando o pagamento for recebido.</p>
+          </div>
+          <form method="post" style="display:inline">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="status" value="paid" />
+            <button type="submit" style="background:#27ae60;color:#fff;border:none;padding:10px 24px;border-radius:50px;font-weight:700;cursor:pointer;font-size:1rem">
+              ✅ Confirmar Pagamento
+            </button>
+          </form>
+        </div>
+      </div>
+    }
 
     <form method="post" class="admin-panel">
       @Html.AntiForgeryToken()

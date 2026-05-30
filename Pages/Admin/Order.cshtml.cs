@@ -26,6 +26,7 @@ public class OrderModel : PageModel
     public string Status { get; set; } = "";
     public string CustomerName { get; set; } = "";
     public string CustomerPhone { get; set; } = "";
+    public string CustomerEmail { get; set; } = "";
     public string CustomerAddress { get; set; } = "";
     public string CustomerCPF { get; set; } = "";
     public decimal Subtotal { get; set; }
@@ -57,6 +58,7 @@ public class OrderModel : PageModel
         Status = order.Status;
         CustomerName = order.CustomerName;
         CustomerPhone = order.CustomerPhone;
+        CustomerEmail = order.CustomerEmail;
         CustomerAddress = order.CustomerAddress;
         CustomerCPF = order.CustomerCPF;
         Subtotal = order.Subtotal;

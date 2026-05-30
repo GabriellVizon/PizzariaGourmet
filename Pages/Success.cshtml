@@ -59,38 +59,48 @@ if (shortId) {
 if (sessionId) {
   (async () => {
     try {
-      const res = await fetch('/session/' + encodeURIComponent(sessionId));
-      const json = await res.json();
-      if (json.error) {
+      const confirmRes = await fetch('/api/orders/confirm-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+      });
+      const confirmJson = await confirmRes.json();
+      if (confirmJson.confirmed) {
         document.getElementById('success-message').innerHTML = `
-          Pagamento confirmado via cartão de crédito!<br>
-          Em breve você receberá a confirmação por WhatsApp.
+          Pagamento confirmado com sucesso!<br>
+          Você receberá a confirmação por e-mail.
+        `;
+      } else if (confirmJson.status) {
+        document.getElementById('success-message').innerHTML = `
+          Pagamento em processamento...<br>
+          Status: <strong>${confirmJson.status}</strong>
         `;
       } else {
         document.getElementById('success-message').innerHTML = `
-          Pagamento confirmado via cartão de crédito!<br>
-          ID da transação: <strong>${json.id.slice(0, 8)}...</strong><br>
-          Em breve você receberá a confirmação por WhatsApp.
+          Pagamento confirmado!<br>
+          Você receberá a confirmação por e-mail.
         `;
       }
       localStorage.removeItem('cart');
     } catch (e) {
       document.getElementById('success-message').innerHTML = `
         Pagamento confirmado!<br>
-        Em breve você receberá a confirmação por WhatsApp.
+        Você receberá a confirmação por e-mail.
       `;
+      localStorage.removeItem('cart');
     }
   })();
 } else if (orderId) {
   document.getElementById('success-message').innerHTML = `
-    Pagamento registrado!<br>
-    Aguarde o contato da pizzaria para confirmar o recebimento e iniciar a preparação.
+    Pedido registrado com sucesso!<br>
+    Guarde o número do pedido para acompanhar.<br>
+    Pagamento via <strong>PIX</strong> será confirmado manualmente após a transferência.
   `;
   localStorage.removeItem('cart');
 } else {
   document.getElementById('success-message').innerHTML = `
     Pedido registrado com sucesso!<br>
-    Em breve você receberá a confirmação.
+    Guarde o número do pedido para acompanhar.
   `;
   localStorage.removeItem('cart');
 }

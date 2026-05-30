@@ -327,8 +327,49 @@ app.MapPost("/create-checkout-session", async (HttpRequest req, OrderService ord
 
     await orderSvc.CreateAsync(order);
 
+    // Build a simple order summary for email
+    var orderSummaryHtml = "";
+    try
+    {
+        var cartDoc = JsonDocument.Parse(body);
+        if (cartDoc.RootElement.ValueKind == JsonValueKind.Array)
+        {
+            var items = new List<string>();
+            foreach (var item in cartDoc.RootElement.EnumerateArray())
+            {
+                var name = item.TryGetProperty("name", out var nameEl) ? nameEl.GetString() ?? "" : "";
+                var qty = item.TryGetProperty("qty", out var q) ? q.GetInt32() : 1;
+                var price = item.TryGetProperty("price", out var p) ? p.GetDecimal() : 0;
+                var size = item.TryGetProperty("size", out var s) && s.ValueKind == JsonValueKind.Object
+                    ? (s.TryGetProperty("name", out var sn) ? sn.GetString() ?? "" : "") : "";
+                var comps = "";
+                if (item.TryGetProperty("complements", out var compsEl) && compsEl.ValueKind == JsonValueKind.Array)
+                {
+                    var compNames = compsEl.EnumerateArray().Select(c =>
+                        c.TryGetProperty("name", out var cn) ? cn.GetString() ?? "" : "");
+                    comps = " (+" + string.Join(", ", compNames) + ")";
+                }
+                items.Add($"<tr><td style='padding:6px 12px;border-bottom:1px solid #eee'>{name}{(string.IsNullOrEmpty(size) ? "" : $" <span style='color:#888'>- {size}</span>")}{comps}</td><td style='padding:6px 12px;border-bottom:1px solid #eee;text-align:center'>{qty}x</td><td style='padding:6px 12px;border-bottom:1px solid #eee;text-align:right'>R$ {price + (item.TryGetProperty("complements", out var _) ? (decimal?)null : 0):F2}</td></tr>");
+            }
+            if (items.Count > 0)
+            {
+                orderSummaryHtml = "<table style='width:100%;border-collapse:collapse;font-size:0.9rem'>" +
+                    "<thead><tr style='background:#f8f8f8'><th style='padding:8px 12px;text-align:left'>Item</th><th style='padding:8px 12px;text-align:center'>Qtd</th><th style='padding:8px 12px;text-align:right'>Valor</th></tr></thead><tbody>" +
+                    string.Join("", items) + "</tbody></table>" +
+                    $"<p style='text-align:right;font-weight:700;margin-top:12px'>Total: R$ {order.Total:F2}</p>";
+            }
+        }
+    }
+    catch { }
+
     // Send notification for all orders
     _ = notifySvc.SendNotificationsAsync(order.Id, body);
+
+    // Send confirmation to customer
+    if (!string.IsNullOrEmpty(order.CustomerEmail))
+    {
+        _ = notifySvc.SendCustomerConfirmationAsync(order.CustomerEmail, order.CustomerName, order.Id, orderSummaryHtml);
+    }
 
     // Send WhatsApp to customer
     if (!string.IsNullOrEmpty(order.CustomerPhone))
@@ -512,6 +553,55 @@ app.MapDelete("/api/coupons/{id:int}", async (int id, PizzariaGourmet.Services.C
     return ok ? Results.Ok() : Results.NotFound();
 }).RequireAuthorization();
 
+// Confirm payment after Stripe redirect (fallback when webhook is not configured)
+app.MapPost("/api/orders/confirm-payment", async (HttpRequest req, OrderService orderSvc, NotificationService notifySvc, ILogger<Program> logger) =>
+{
+    var stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_KEY");
+    if (string.IsNullOrEmpty(stripeKey))
+        return Results.BadRequest(new { error = "STRIPE_API_KEY not configured" });
+    StripeConfiguration.ApiKey = stripeKey;
+
+    using var sr = new StreamReader(req.Body);
+    var body = await sr.ReadToEndAsync();
+    var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(body) ? "{}" : body);
+
+    if (!doc.RootElement.TryGetProperty("session_id", out var sessionIdEl))
+        return Results.BadRequest(new { error = "session_id required" });
+
+    var sessionId = sessionIdEl.GetString();
+    if (string.IsNullOrEmpty(sessionId))
+        return Results.BadRequest(new { error = "session_id required" });
+
+    try
+    {
+        var session = await new SessionService().GetAsync(sessionId);
+        if (session.PaymentStatus != "paid" && session.PaymentStatus != "completed")
+            return Results.Json(new { confirmed = false, status = session.PaymentStatus });
+
+        var orderId = session.ClientReferenceId;
+        if (string.IsNullOrEmpty(orderId))
+            return Results.BadRequest(new { error = "No order linked to this session" });
+
+        var order = await orderSvc.GetByIdAsync(orderId);
+        if (order == null)
+            return Results.NotFound(new { error = "Order not found" });
+
+        if (order.Status != "paid")
+        {
+            await orderSvc.UpdateStatusAsync(orderId, "paid");
+            _ = notifySvc.SendNotificationsAsync(orderId, order.Items);
+            logger.LogInformation("Order {OrderId} confirmed via confirm-payment endpoint (session {SessionId})", orderId, sessionId);
+        }
+
+        return Results.Json(new { confirmed = true, orderId });
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to confirm payment for session {SessionId}", sessionId);
+        return Results.BadRequest(new { error = "Failed to confirm payment" });
+    }
+});
+
 app.MapPost("/webhook", async (HttpRequest req, OrderService orderSvc, NotificationService notifySvc, ILogger<Program> logger) =>
 {
     var json = await new StreamReader(req.Body).ReadToEndAsync();
@@ -546,6 +636,43 @@ app.MapPost("/webhook", async (HttpRequest req, OrderService orderSvc, Notificat
         logger.LogError(ex, "Stripe webhook processing failed");
         return Results.BadRequest();
     }
+});
+
+// Startup config validation
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    var stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_KEY");
+    var stripeWebhook = Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET");
+    var smtpHost = app.Configuration["SMTP_HOST"];
+    var whatsappUrl = Environment.GetEnvironmentVariable("WHATSAPP_API_URL");
+
+    logger.LogInformation("═══════════════════════════════════════");
+    logger.LogInformation("  Pizzaria Gourmet — Verificação de Config");
+    logger.LogInformation("═══════════════════════════════════════");
+    logger.LogInformation("  Admin: {Email}", app.Configuration["Admin:Email"] ?? "admin@pizzariagourmet.com (padrão)");
+
+    if (!string.IsNullOrEmpty(stripeKey))
+        logger.LogInformation("  ✅ Stripe API KEY configurada");
+    else
+        logger.LogWarning("  ⚠️  STRIPE_API_KEY não configurada — pagamentos com cartão não funcionarão");
+
+    if (!string.IsNullOrEmpty(stripeWebhook))
+        logger.LogInformation("  ✅ Stripe Webhook Secret configurado");
+    else
+        logger.LogWarning("  ⚠️  STRIPE_WEBHOOK_SECRET não configurada — confirmação via /api/orders/confirm-payment será usada");
+
+    if (!string.IsNullOrEmpty(smtpHost))
+        logger.LogInformation("  ✅ SMTP configurado — e-mails serão enviados");
+    else
+        logger.LogWarning("  ⚠️  SMTP_HOST não configurado — e-mails de confirmação não serão enviados");
+
+    if (!string.IsNullOrEmpty(whatsappUrl))
+        logger.LogInformation("  ✅ WhatsApp API configurada");
+    else
+        logger.LogWarning("  ⚠️  WHATSAPP_API_URL não configurada — notificações WhatsApp desativadas");
+
+    logger.LogInformation("═══════════════════════════════════════");
 });
 
 app.Run();
