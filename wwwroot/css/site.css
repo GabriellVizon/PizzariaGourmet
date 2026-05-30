@@ -1287,6 +1287,70 @@ body {
 }
 .btn-home:hover { background: var(--brand-dark); }
 
+.order-number-box {
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius);
+  display: inline-block;
+  text-align: center;
+}
+.order-number-label {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.order-number-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--brand);
+  letter-spacing: 2px;
+  font-family: monospace;
+}
+.order-number-copy {
+  margin-top: 8px;
+  padding: 6px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--text);
+  transition: var(--transition);
+}
+.order-number-copy:hover {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+/* ===== SEARCH BAR ===== */
+.search-bar {
+  max-width: 400px;
+  margin: 0 auto 24px;
+}
+.search-bar input {
+  width: 100%;
+  padding: 12px 20px;
+  border: 2px solid var(--border);
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background: #fff;
+  transition: var(--transition);
+  outline: none;
+}
+.search-bar input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
+}
+
 /* ===== ADMIN ===== */
 .admin-page { padding: 32px 0; }
 .admin-page h2 { margin-top: 0; }

@@ -419,7 +419,7 @@ app.MapGet("/session/{id}", async (string id, ILogger<Program> logger) =>
 var uploadsDir = System.IO.Path.Combine(builder.Environment.WebRootPath, "uploads");
 System.IO.Directory.CreateDirectory(uploadsDir);
 
-app.MapPost("/api/upload", async (HttpRequest req) =>
+app.MapPost("/api/upload", async (HttpRequest req, ILogger<Program> logger) =>
 {
     if (!req.HasFormContentType)
         return Results.BadRequest(new { error = "Expected form data" });
@@ -428,6 +428,9 @@ app.MapPost("/api/upload", async (HttpRequest req) =>
     var file = form.Files.GetFile("file");
     if (file == null || file.Length == 0)
         return Results.BadRequest(new { error = "No file provided" });
+
+    if (file.Length > 5 * 1024 * 1024)
+        return Results.BadRequest(new { error = "File too large. Maximum size is 5MB." });
 
     var ext = System.IO.Path.GetExtension(file.FileName).ToLowerInvariant();
     var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
@@ -442,6 +445,7 @@ app.MapPost("/api/upload", async (HttpRequest req) =>
         await file.CopyToAsync(stream);
     }
 
+    logger.LogInformation("Uploaded file {FileName} ({Size} bytes)", fileName, file.Length);
     var url = $"/uploads/{fileName}";
     return Results.Json(new { url });
 }).RequireAuthorization();
@@ -515,7 +519,10 @@ app.MapPost("/webhook", async (HttpRequest req, OrderService orderSvc, Notificat
     var webhookSecret = Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET");
 
     if (string.IsNullOrEmpty(webhookSecret))
+    {
+        logger.LogWarning("STRIPE_WEBHOOK_SECRET not set — webhook skipped. Orders paid via card will stay 'pending' until manually updated.");
         return Results.Ok();
+    }
 
     try
     {

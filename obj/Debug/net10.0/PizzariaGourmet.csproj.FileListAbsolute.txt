@@ -328,7 +328,8 @@ C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\Pizz
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\ref\PizzariaGourmet.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Data\settings.json
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\er9aij8d73-{0}-ifohab7dve-ifohab7dve.gz
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\auo8ion5ip-{0}-3vp0xktn9o-3vp0xktn9o.gz
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\w2zseeydc0-{0}-dbgyxhhxw8-dbgyxhhxw8.gz
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\xthk0bua8u-{0}-yc9d0zj45e-yc9d0zj45e.gz
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\g2gl2hvfbz-{0}-yk9r9as7xp-yk9r9as7xp.gz
+C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\appsettings.json
+C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\auo8ion5ip-{0}-bxmhhz99pi-bxmhhz99pi.gz
+C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\g2gl2hvfbz-{0}-e9vtxcnf1r-e9vtxcnf1r.gz

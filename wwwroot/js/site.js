@@ -21,6 +21,7 @@ const floatingCount = document.getElementById('floating-count');
 const floatingTotal = document.getElementById('floating-total');
 
 let currentCategory = 'all';
+let searchQuery = '';
 let allProducts = [];
 let allComplements = [];
 
@@ -388,14 +389,22 @@ function filterCategory(category) {
   document.querySelectorAll('.category-tab').forEach(tab => {
     tab.classList.toggle('active', tab.dataset.cat === category);
   });
+  const searchEl = document.getElementById('product-search');
+  if (searchEl) searchEl.value = '';
+  searchQuery = '';
   renderProducts(allProducts);
 }
 
 function renderProducts(products) {
   if (!productsEl) return;
-  const filtered = currentCategory === 'all'
-    ? products
-    : products.filter(p => p.category === currentCategory);
+  let filtered = products;
+  if (currentCategory !== 'all')
+    filtered = filtered.filter(p => p.category === currentCategory);
+  if (searchQuery)
+    filtered = filtered.filter(p =>
+      p.name.toLowerCase().includes(searchQuery) ||
+      (p.description && p.description.toLowerCase().includes(searchQuery))
+    );
 
   if (filtered.length === 0) {
     productsEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light)">Nenhum produto encontrado nesta categoria.</div>';
@@ -516,6 +525,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.category-tab').forEach(tab => {
     tab.addEventListener('click', () => filterCategory(tab.dataset.cat));
+  });
+
+  document.getElementById('product-search')?.addEventListener('input', function() {
+    searchQuery = this.value.toLowerCase().trim();
+    renderProducts(allProducts);
   });
 
   document.querySelector('.mobile-menu-btn')?.addEventListener('click', () => {

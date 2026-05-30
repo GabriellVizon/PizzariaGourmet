@@ -7,21 +7,54 @@
   <div class="success-icon">✓</div>
   <h2>Pedido Confirmado! 🎉</h2>
   <p>Seu pedido foi recebido com sucesso.</p>
-  <p id="success-message" class="success-details">Processando...</p>
-  <div style="margin-top:16px;padding:16px;background:var(--bg);border-radius:var(--radius-sm);display:inline-block">
-    <p style="margin:0 0 8px;font-weight:600">📞 Precisa de ajuda?</p>
-    <a href="https://wa.me/5524992206707" style="color:var(--brand);font-weight:700;text-decoration:none">Fale conosco no WhatsApp</a>
+
+  <div id="order-number-box" class="order-number-box" style="display:none">
+    <div class="order-number-label">Nº do Pedido</div>
+    <div class="order-number-value" id="order-number-display"></div>
+    <button class="order-number-copy" id="copy-order-btn" onclick="copyOrderNumber()">📋 Copiar</button>
   </div>
+
+  <p id="success-message" class="success-details">Processando...</p>
+
+  <div id="tracking-link-box" style="display:none;margin-top:12px">
+    <a id="tracking-link" class="btn-home" style="background:var(--accent);border-color:var(--accent);display:inline-flex;align-items:center;gap:8px">
+      📦 Acompanhar Pedido
+    </a>
+  </div>
+
+  <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:var(--radius-sm);display:inline-block">
+    <p style="margin:0 0 8px;font-weight:600">📞 Precisa de ajuda?</p>
+    <a id="whatsapp-help-link" href="https://wa.me/5524992206707" style="color:var(--brand);font-weight:700;text-decoration:none">Fale conosco no WhatsApp</a>
+  </div>
+
   <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
     <a href="/" class="btn-home">← Voltar ao Cardápio</a>
-    <a href="/Rastreio" class="btn-home" style="background:var(--accent);border-color:var(--accent)">📦 Rastrear Pedido</a>
+    <a href="/Historico" class="btn-home" style="background:var(--accent);border-color:var(--accent)">📋 Meus Pedidos</a>
   </div>
 </div>
 
 <script>
+function copyOrderNumber() {
+  const el = document.getElementById('order-number-display');
+  const btn = document.getElementById('copy-order-btn');
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    btn.textContent = '✓ Copiado!';
+    setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+  }).catch(() => {});
+}
+
 const params = new URLSearchParams(window.location.search);
 const sessionId = params.get('session_id');
 const orderId = params.get('order_id');
+const shortId = orderId ? '#' + orderId.slice(0, 8) : '';
+
+if (shortId) {
+  document.getElementById('order-number-box').style.display = 'block';
+  document.getElementById('order-number-display').textContent = shortId;
+  document.getElementById('tracking-link-box').style.display = 'block';
+  document.getElementById('tracking-link').href = '/Rastreio?PedidoId=' + orderId;
+  document.getElementById('whatsapp-help-link').href = 'https://wa.me/5524992206707?text=Oi!%20Preciso%20de%20ajuda%20com%20o%20pedido%20' + encodeURIComponent(shortId);
+}
 
 if (sessionId) {
   (async () => {
@@ -50,9 +83,8 @@ if (sessionId) {
   })();
 } else if (orderId) {
   document.getElementById('success-message').innerHTML = `
-    Pedido registrado com sucesso!<br>
-    Nº do pedido: <strong>#${orderId.slice(0, 8)}</strong><br>
-    Aguarde o contato da pizzaria para confirmar o pagamento e a entrega.
+    Pagamento registrado!<br>
+    Aguarde o contato da pizzaria para confirmar o recebimento e iniciar a preparação.
   `;
   localStorage.removeItem('cart');
 } else {
