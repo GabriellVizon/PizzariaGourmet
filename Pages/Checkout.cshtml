@@ -20,6 +20,10 @@
             </div>
           </div>
           <div class="form-group">
+            <label for="email">E-mail</label>
+            <input id="email" name="email" type="email" placeholder="seu@email.com" />
+          </div>
+          <div class="form-group">
             <label for="address">Endereço de entrega</label>
             <input id="address" name="address" required placeholder="Rua, número, bairro, complemento" />
           </div>
@@ -87,31 +91,47 @@
 </div>
 
 <script>
-const DELIVERY_FEE = 5.00;
-const FREE_DELIVERY_MIN = 50.00;
+let DELIVERY_FEE = 5.00;
+let FREE_DELIVERY_MIN = 50.00;
 
 function formatPrice(p) {
   return p.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function getItemTotal(item) {
+  const base = item.price * item.qty;
+  const comps = item.complements ? item.complements.reduce((s, c) => s + c.price, 0) * item.qty : 0;
+  return base + comps;
+}
+
+function getBaseSubtotal(cart) {
+  return cart.reduce((s, i) => s + (i.price * i.qty), 0);
+}
+
 function renderCheckoutSummary() {
   const cart = JSON.parse(localStorage.getItem('cart') || '[]');
   const el = document.getElementById('checkout-items');
-  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  const delivery = subtotal >= FREE_DELIVERY_MIN ? 0 : DELIVERY_FEE;
+  const subtotal = cart.reduce((s, i) => s + getItemTotal(i), 0);
+  const delivery = getBaseSubtotal(cart) >= FREE_DELIVERY_MIN ? 0 : DELIVERY_FEE;
   const total = subtotal + delivery;
 
   if (cart.length === 0) {
     el.innerHTML = '<div style="color:var(--text-light);text-align:center;padding:16px 0">Carrinho vazio</div>';
     document.querySelector('.btn-checkout').disabled = true;
   } else {
-    el.innerHTML = cart.map(i => `
-      <div class="checkout-summary-item">
-        <span class="cs-name">${i.name}</span>
+    el.innerHTML = cart.map(i => {
+      const sizeText = i.size ? ` <span style="font-size:0.75rem;font-weight:700;color:var(--accent)">${i.size.name}</span>` : '';
+      const compsText = i.complements && i.complements.length > 0
+        ? `<span class="cs-comps">+ ${i.complements.map(c => c.name).join(', ')}</span>`
+        : '';
+      return `
+      <div class="checkout-summary-item" style="flex-wrap:wrap">
+        <span class="cs-name">${i.name}${sizeText}</span>
+        ${compsText}
         <span class="cs-qty">x${i.qty}</span>
-        <span class="cs-price">R$ ${formatPrice(i.price * i.qty)}</span>
-      </div>
-    `).join('');
+        <span class="cs-price">R$ ${formatPrice(getItemTotal(i))}</span>
+      </div>`;
+    }).join('');
   }
 
   document.getElementById('checkout-subtotal').textContent = `R$ ${formatPrice(subtotal)}`;
@@ -119,7 +139,25 @@ function renderCheckoutSummary() {
   document.getElementById('checkout-total').textContent = `R$ ${formatPrice(total)}`;
 }
 
-renderCheckoutSummary();
+(async () => {
+  try {
+    const res = await fetch('/api/settings');
+    const data = await res.json();
+    DELIVERY_FEE = data.deliveryFee;
+    FREE_DELIVERY_MIN = data.freeDeliveryMin;
+  } catch (e) {
+    console.error('Erro ao carregar configurações:', e);
+  }
+  renderCheckoutSummary();
+
+  document.querySelectorAll('.payment-option').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('payment-method').value = el.dataset.method;
+    });
+  });
+})();
 
 document.getElementById('checkout-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -141,6 +179,7 @@ document.getElementById('checkout-form').addEventListener('submit', async (e) =>
     customer: {
       name: data.get('name'),
       phone: data.get('phone'),
+      email: data.get('email'),
       address: data.get('address'),
       cpf: data.get('cpf'),
       number: data.get('number'),

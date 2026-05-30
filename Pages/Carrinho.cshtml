@@ -1,0 +1,136 @@
+@page
+@{
+  Layout = "_Layout";
+}
+
+<div class="carrinho-page">
+  <div class="container">
+    <div class="carrinho-grid">
+      <div class="carrinho-items">
+        <h2>🛒 Revise seu Pedido</h2>
+        <div id="carrinho-items-list">
+          <div style="text-align:center;padding:40px;color:var(--text-light)">Carregando...</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="carrinho-summary">
+          <h3>📄 Resumo</h3>
+          <div class="carrinho-summary-row">
+            <span>Subtotal</span>
+            <span id="carrinho-subtotal" style="font-weight:600">R$ 0,00</span>
+          </div>
+          <div class="carrinho-summary-row">
+            <span>Taxa de entrega</span>
+            <span id="carrinho-delivery" style="font-weight:600">R$ 0,00</span>
+          </div>
+          <div class="carrinho-summary-total">
+            <span>Total</span>
+            <span class="cs-value" id="carrinho-total">R$ 0,00</span>
+          </div>
+
+          <div class="carrinho-actions">
+            <button class="btn-continue" id="carrinho-continue">
+              Continuar para Checkout →
+            </button>
+            <a href="/" class="btn-back-menu">← Continuar Comprando</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let DELIVERY_FEE = 5.00;
+let FREE_DELIVERY_MIN = 50.00;
+
+function formatPrice(p) {
+  return p.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getItemTotal(item) {
+  const base = item.price * item.qty;
+  const comps = item.complements ? item.complements.reduce((s, c) => s + c.price, 0) * item.qty : 0;
+  return base + comps;
+}
+
+function getBaseSubtotal(cart) {
+  return cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+}
+
+function renderCarrinho() {
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  const listEl = document.getElementById('carrinho-items-list');
+  const subtotal = cart.reduce((sum, i) => sum + getItemTotal(i), 0);
+  const delivery = getBaseSubtotal(cart) >= FREE_DELIVERY_MIN ? 0 : DELIVERY_FEE;
+  const total = subtotal + delivery;
+
+  if (cart.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light)">Seu carrinho está vazio.</div>';
+    document.getElementById('carrinho-continue').disabled = true;
+  } else {
+    listEl.innerHTML = cart.map((item, idx) => {
+      const sizeText = item.size ? ` <span style="font-size:0.75rem;font-weight:700;color:var(--accent);background:var(--bg);padding:1px 8px;border-radius:50px">${item.size.name}</span>` : '';
+      const compsText = item.complements && item.complements.length > 0
+        ? `<div class="carrinho-item-comps">+ ${item.complements.map(c => c.name).join(', ')}</div>`
+        : '';
+      const itemTotal = getItemTotal(item);
+      return `
+        <div class="carrinho-item">
+          <img class="carrinho-item-img" src="${item.image || ''}" alt="${item.name}" onerror="this.style.display='none'" />
+          <div class="carrinho-item-info">
+            <div class="carrinho-item-name">${item.name}${sizeText}</div>
+            ${compsText}
+            <div class="carrinho-item-price">R$ ${formatPrice(item.price)} cada</div>
+          </div>
+          <div class="carrinho-item-qty">
+            <button onclick="changeCarrinhoQty(${idx}, -1)">−</button>
+            <span>${item.qty}</span>
+            <button onclick="changeCarrinhoQty(${idx}, 1)">+</button>
+          </div>
+          <div class="carrinho-item-total">R$ ${formatPrice(itemTotal)}</div>
+          <button class="carrinho-item-remove" onclick="removeCarrinhoItem(${idx})" title="Remover">✕</button>
+        </div>`;
+    }).join('');
+  }
+
+  document.getElementById('carrinho-subtotal').textContent = `R$ ${formatPrice(subtotal)}`;
+  document.getElementById('carrinho-delivery').textContent = delivery === 0 ? 'Grátis' : `R$ ${formatPrice(delivery)}`;
+  document.getElementById('carrinho-total').textContent = `R$ ${formatPrice(total)}`;
+}
+
+window.changeCarrinhoQty = function(idx, delta) {
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  if (idx < 0 || idx >= cart.length) return;
+  cart[idx].qty += delta;
+  if (cart[idx].qty < 1) cart.splice(idx, 1);
+  localStorage.setItem('cart', JSON.stringify(cart));
+  renderCarrinho();
+};
+
+window.removeCarrinhoItem = function(idx) {
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  cart.splice(idx, 1);
+  localStorage.setItem('cart', JSON.stringify(cart));
+  renderCarrinho();
+};
+
+document.getElementById('carrinho-continue').addEventListener('click', () => {
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  if (cart.length === 0) return;
+  location.href = '/Checkout';
+});
+
+(async () => {
+  try {
+    const res = await fetch('/api/settings');
+    const data = await res.json();
+    DELIVERY_FEE = data.deliveryFee;
+    FREE_DELIVERY_MIN = data.freeDeliveryMin;
+  } catch (e) {
+    console.error('Erro ao carregar configurações:', e);
+  }
+  renderCarrinho();
+})();
+</script>

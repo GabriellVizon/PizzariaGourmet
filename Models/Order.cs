@@ -15,6 +15,9 @@ public class Order
     [JsonPropertyName("customerPhone")]
     public string CustomerPhone { get; set; } = string.Empty;
 
+    [JsonPropertyName("customerEmail")]
+    public string CustomerEmail { get; set; } = string.Empty;
+
     [JsonPropertyName("customerAddress")]
     public string CustomerAddress { get; set; } = string.Empty;
 

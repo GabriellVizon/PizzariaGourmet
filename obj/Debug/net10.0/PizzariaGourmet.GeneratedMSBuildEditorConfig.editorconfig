@@ -19,45 +19,65 @@ build_property.TargetFrameworkIdentifier = .NETCoreApp
 build_property.TargetFrameworkVersion = v10.0
 build_property.RootNamespace = PizzariaGourmet
 build_property.RootNamespace = PizzariaGourmet
-build_property.ProjectDir = C:\Users\etec\Desktop\PizzariaGourmet\
+build_property.ProjectDir = C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 9.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = C:\Users\etec\Desktop\PizzariaGourmet
+build_property.MSBuildProjectDirectory = C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 10.0
 build_property.EnableCodeStyleSeverity = 
 
-[C:/Users/etec/Desktop/PizzariaGourmet/Pages/Admin/Login.cshtml]
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Admin/Complements.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cQ29tcGxlbWVudHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Admin/Login.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cTG9naW4uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/etec/Desktop/PizzariaGourmet/Pages/Admin/Order.cshtml]
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Admin/Order.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cT3JkZXIuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/etec/Desktop/PizzariaGourmet/Pages/Admin/Orders.cshtml]
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Admin/Orders.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cT3JkZXJzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/etec/Desktop/PizzariaGourmet/Pages/Admin/Products.cshtml]
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Admin/Products.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cUHJvZHVjdHMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/etec/Desktop/PizzariaGourmet/Pages/Checkout.cshtml]
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Admin/Settings.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cU2V0dGluZ3MuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Admin/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Carrinho.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2FycmluaG8uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Checkout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2hlY2tvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/etec/Desktop/PizzariaGourmet/Pages/Index.cshtml]
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/etec/Desktop/PizzariaGourmet/Pages/Shared/_Layout.cshtml]
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Shared/_Layout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9MYXlvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/etec/Desktop/PizzariaGourmet/Pages/Success.cshtml]
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Success.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3VjY2Vzcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 

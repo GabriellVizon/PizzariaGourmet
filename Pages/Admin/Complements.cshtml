@@ -1,0 +1,49 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@{
+  Layout = "_Layout";
+}
+
+<div class="admin-page">
+  <div class="container">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="margin:0">🧀 Gerenciar Complementos</h2>
+        <div style="display:flex;gap:16px">
+          <a href="/Admin/Orders" style="color:var(--text-light);font-weight:600;text-decoration:none">← Pedidos</a>
+          <a href="/Admin/Products" style="color:var(--brand);font-weight:600;text-decoration:none">Gerenciar Produtos</a>
+        </div>
+      </div>
+
+    <div class="admin-panel">
+      <form id="complement-form">
+        <input type="hidden" name="id" />
+        <div>
+          <label>Nome</label>
+          <input name="name" required placeholder="Ex: Catupiry, Cheddar, Bacon..." />
+        </div>
+        <div>
+          <label>Preço Extra (R$)</label>
+          <input name="price" type="number" step="0.01" required placeholder="3.00" />
+        </div>
+        <div>
+          <label>
+            <input name="available" type="checkbox" checked value="true" style="width:auto" />
+            Disponível
+          </label>
+        </div>
+        <div style="margin-top:12px">
+          <button id="save-complement" type="submit">Salvar</button>
+          <button id="reset-complement-form" type="button">Limpar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="admin-panel">
+      <h3>Complementos Cadastrados</h3>
+      <div id="complements-list">Carregando...</div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/admin-complements.js"></script>

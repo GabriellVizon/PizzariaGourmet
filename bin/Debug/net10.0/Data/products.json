@@ -6,7 +6,8 @@
     "price": 34.90,
     "image": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600&h=400&fit=crop",
     "category": "Clássica",
-    "available": true
+    "available": true,
+    "sizesJson": "[{\"name\":\"P\",\"diameter\":30,\"price\":34.90},{\"name\":\"M\",\"diameter\":40,\"price\":42.90},{\"name\":\"G\",\"diameter\":50,\"price\":52.90}]"
   },
   {
     "id": 2,
@@ -15,7 +16,8 @@
     "price": 38.50,
     "image": "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=600&h=400&fit=crop",
     "category": "Clássica",
-    "available": true
+    "available": true,
+    "sizesJson": "[{\"name\":\"P\",\"diameter\":30,\"price\":38.50},{\"name\":\"M\",\"diameter\":40,\"price\":46.50},{\"name\":\"G\",\"diameter\":50,\"price\":56.50}]"
   },
   {
     "id": 3,
@@ -24,7 +26,8 @@
     "price": 42.00,
     "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=400&fit=crop",
     "category": "Clássica",
-    "available": true
+    "available": true,
+    "sizesJson": "[{\"name\":\"P\",\"diameter\":30,\"price\":42.00},{\"name\":\"M\",\"diameter\":40,\"price\":50.00},{\"name\":\"G\",\"diameter\":50,\"price\":60.00}]"
   },
   {
     "id": 4,
@@ -33,7 +36,8 @@
     "price": 45.00,
     "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&h=400&fit=crop",
     "category": "Especial",
-    "available": true
+    "available": true,
+    "sizesJson": "[{\"name\":\"P\",\"diameter\":30,\"price\":45.00},{\"name\":\"M\",\"diameter\":40,\"price\":53.00},{\"name\":\"G\",\"diameter\":50,\"price\":63.00}]"
   },
   {
     "id": 5,
@@ -42,7 +46,8 @@
     "price": 40.00,
     "image": "https://images.unsplash.com/photo-1566843972142-a8fc0f6c7a2b?w=600&h=400&fit=crop",
     "category": "Especial",
-    "available": true
+    "available": true,
+    "sizesJson": "[{\"name\":\"P\",\"diameter\":30,\"price\":40.00},{\"name\":\"M\",\"diameter\":40,\"price\":48.00},{\"name\":\"G\",\"diameter\":50,\"price\":58.00}]"
   },
   {
     "id": 6,
@@ -51,7 +56,8 @@
     "price": 36.50,
     "image": "https://images.unsplash.com/photo-1576458088443-04a19bb13da6?w=600&h=400&fit=crop",
     "category": "Especial",
-    "available": true
+    "available": true,
+    "sizesJson": "[{\"name\":\"P\",\"diameter\":30,\"price\":36.50},{\"name\":\"M\",\"diameter\":40,\"price\":44.50},{\"name\":\"G\",\"diameter\":50,\"price\":54.50}]"
   },
   {
     "id": 7,
@@ -60,7 +66,8 @@
     "price": 44.00,
     "image": "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=600&h=400&fit=crop",
     "category": "Premium",
-    "available": true
+    "available": true,
+    "sizesJson": "[{\"name\":\"P\",\"diameter\":30,\"price\":44.00},{\"name\":\"M\",\"diameter\":40,\"price\":52.00},{\"name\":\"G\",\"diameter\":50,\"price\":62.00}]"
   },
   {
     "id": 8,
@@ -69,7 +76,8 @@
     "price": 52.00,
     "image": "https://images.unsplash.com/photo-1594007654729-407eedc4be65?w=600&h=400&fit=crop",
     "category": "Premium",
-    "available": true
+    "available": true,
+    "sizesJson": "[{\"name\":\"P\",\"diameter\":30,\"price\":52.00},{\"name\":\"M\",\"diameter\":40,\"price\":60.00},{\"name\":\"G\",\"diameter\":50,\"price\":70.00}]"
   },
   {
     "id": 9,
@@ -78,33 +86,37 @@
     "price": 48.00,
     "image": "https://images.unsplash.com/photo-1590947132387-155cc02f3212?w=600&h=400&fit=crop",
     "category": "Premium",
-    "available": true
+    "available": true,
+    "sizesJson": "[{\"name\":\"P\",\"diameter\":30,\"price\":48.00},{\"name\":\"M\",\"diameter\":40,\"price\":56.00},{\"name\":\"G\",\"diameter\":50,\"price\":66.00}]"
   },
   {
     "id": 10,
-    "name": "Coca-Cola 2L",
-    "description": "Refrigerante Coca-Cola tradicional 2 litros.",
+    "name": "Coca-Cola",
+    "description": "Refrigerante Coca-Cola.",
     "price": 10.00,
     "image": "https://images.unsplash.com/photo-1554866585-cd94860890b7?w=600&h=400&fit=crop",
     "category": "Bebida",
-    "available": true
+    "available": true,
+    "sizesJson": "[{\"name\":\"Lata\",\"diameter\":null,\"price\":5.00},{\"name\":\"1L\",\"diameter\":null,\"price\":8.00},{\"name\":\"2L\",\"diameter\":null,\"price\":10.00}]"
   },
   {
     "id": 11,
-    "name": "Guaraná Antarctica 2L",
-    "description": "Refrigerante Guaraná Antarctica 2 litros.",
+    "name": "Guaraná Antarctica",
+    "description": "Refrigerante Guaraná Antarctica.",
     "price": 9.00,
     "image": "https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=600&h=400&fit=crop",
     "category": "Bebida",
-    "available": true
+    "available": true,
+    "sizesJson": "[{\"name\":\"Lata\",\"diameter\":null,\"price\":5.00},{\"name\":\"1L\",\"diameter\":null,\"price\":7.00},{\"name\":\"2L\",\"diameter\":null,\"price\":9.00}]"
   },
   {
     "id": 12,
-    "name": "Suco Natural 500ml",
-    "description": "Suco natural de laranja ou limão. 500ml.",
+    "name": "Suco Natural",
+    "description": "Suco natural de laranja ou limão.",
     "price": 8.00,
     "image": "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=600&h=400&fit=crop",
     "category": "Bebida",
-    "available": true
+    "available": true,
+    "sizesJson": "[{\"name\":\"300ml\",\"diameter\":null,\"price\":6.00},{\"name\":\"500ml\",\"diameter\":null,\"price\":8.00},{\"name\":\"700ml\",\"diameter\":null,\"price\":10.00}]"
   }
 ]

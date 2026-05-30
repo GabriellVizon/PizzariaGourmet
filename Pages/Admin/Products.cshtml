@@ -1,11 +1,19 @@
 @page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @{
   Layout = "_Layout";
 }
 
 <div class="admin-page">
   <div class="container">
-    <h2>Gerenciar Produtos</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="margin:0">Gerenciar Produtos</h2>
+        <div style="display:flex;gap:16px">
+          <a href="/Admin/Orders" style="color:var(--text-light);font-weight:600;text-decoration:none">← Pedidos</a>
+          <a href="/Admin/Complements" style="color:var(--brand);font-weight:600;text-decoration:none">Gerenciar Complementos</a>
+        </div>
+      </div>
 
     <div class="admin-panel">
       <form id="product-form">
@@ -26,6 +34,7 @@
           <label>Imagem (URL)</label>
           <input name="image" placeholder="https://..." />
         </div>
+        <div id="size-editor"></div>
         <div>
           <label>Categoria</label>
           <select name="category">

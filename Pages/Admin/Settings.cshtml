@@ -1,0 +1,70 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@{
+  Layout = "_Layout";
+}
+
+<div class="admin-page">
+  <div class="container" style="max-width:500px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="margin:0">⚙️ Configurações</h2>
+      <a href="/Admin/Orders" style="color:var(--text-light);font-weight:600;text-decoration:none">← Pedidos</a>
+    </div>
+
+    <div class="admin-panel">
+      <form id="settings-form">
+        <div class="form-group">
+          <label for="deliveryFee">Taxa de entrega (mototaxi) — R$</label>
+          <input id="deliveryFee" name="deliveryFee" type="number" step="0.01" min="0" required />
+        </div>
+        <div class="form-group">
+          <label for="freeDeliveryMin">Frete grátis a partir de — R$</label>
+          <input id="freeDeliveryMin" name="freeDeliveryMin" type="number" step="0.01" min="0" required />
+          <small style="color:var(--text-light)">Se o valor for 0, o frete nunca será grátis.</small>
+        </div>
+        <div style="margin-top:16px">
+          <button type="submit">Salvar</button>
+          <span id="settings-result" style="margin-left:12px;font-size:0.85rem"></span>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadSettings() {
+  try {
+    const r = await fetch('/api/settings');
+    const s = await r.json();
+    document.getElementById('deliveryFee').value = s.deliveryFee;
+    document.getElementById('freeDeliveryMin').value = s.freeDeliveryMin;
+  } catch {}
+}
+
+document.getElementById('settings-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
+  const result = document.getElementById('settings-result');
+  try {
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        deliveryFee: Number(document.getElementById('deliveryFee').value),
+        freeDeliveryMin: Number(document.getElementById('freeDeliveryMin').value)
+      })
+    });
+    result.textContent = '✓ Salvo!';
+    result.style.color = '#27ae60';
+  } catch {
+    result.textContent = '✕ Erro ao salvar';
+    result.style.color = 'var(--brand)';
+  }
+  btn.disabled = false;
+  setTimeout(() => result.textContent = '', 3000);
+});
+
+loadSettings();
+</script>

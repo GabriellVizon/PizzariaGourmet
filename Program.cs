@@ -28,6 +28,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped<PizzariaGourmet.Services.ProductService>();
 builder.Services.AddScoped<PizzariaGourmet.Services.OrderService>();
 builder.Services.AddScoped<PizzariaGourmet.Services.NotificationService>();
+builder.Services.AddScoped<PizzariaGourmet.Services.ComplementService>();
 
 builder.Services.AddRazorPages();
 
@@ -62,6 +63,26 @@ using (var scope = app.Services.CreateScope())
             }
         }
     }
+
+    if (!await db.Complements.AnyAsync())
+    {
+        db.Complements.AddRange(
+            new PizzariaGourmet.Models.Complement { Name = "Catupiry", Price = 3.00m, Available = true },
+            new PizzariaGourmet.Models.Complement { Name = "Cheddar", Price = 3.00m, Available = true },
+            new PizzariaGourmet.Models.Complement { Name = "Brigadeiro", Price = 4.00m, Available = true },
+            new PizzariaGourmet.Models.Complement { Name = "Bacon Extra", Price = 4.00m, Available = true },
+            new PizzariaGourmet.Models.Complement { Name = "Mussarela Extra", Price = 3.00m, Available = true },
+            new PizzariaGourmet.Models.Complement { Name = "Calabresa Extra", Price = 3.50m, Available = true },
+            new PizzariaGourmet.Models.Complement { Name = "Pepperoni Extra", Price = 4.50m, Available = true },
+            new PizzariaGourmet.Models.Complement { Name = "Chocolate", Price = 5.00m, Available = true }
+        );
+        await db.SaveChangesAsync();
+    }
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseStaticFiles();
@@ -70,6 +91,25 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+
+// Settings endpoint
+var settingsPath = System.IO.Path.Combine(builder.Environment.ContentRootPath, "Data", "settings.json");
+
+app.MapGet("/api/settings", () =>
+{
+    if (!System.IO.File.Exists(settingsPath))
+        return Results.Json(new { deliveryFee = 5.00, freeDeliveryMin = 50.00 });
+    var json = System.IO.File.ReadAllText(settingsPath);
+    return Results.Content(json, "application/json");
+});
+
+app.MapPost("/api/settings", async (HttpRequest req) =>
+{
+    using var sr = new StreamReader(req.Body);
+    var body = await sr.ReadToEndAsync();
+    await System.IO.File.WriteAllTextAsync(settingsPath, body);
+    return Results.Ok();
+});
 
 app.MapGet("/api/products", async (PizzariaGourmet.Services.ProductService svc) =>
     Results.Json(await svc.GetAllAsync()));
@@ -102,6 +142,41 @@ app.MapDelete("/api/products/{id:int}", async (int id, PizzariaGourmet.Services.
     return ok ? Results.Ok() : Results.NotFound();
 });
 
+// Complement endpoints
+app.MapGet("/api/complements", async (PizzariaGourmet.Services.ComplementService svc) =>
+    Results.Json(await svc.GetAllAsync()));
+
+app.MapGet("/api/complements/available", async (PizzariaGourmet.Services.ComplementService svc) =>
+    Results.Json(await svc.GetAvailableAsync()));
+
+app.MapGet("/api/complements/{id:int}", async (int id, PizzariaGourmet.Services.ComplementService svc) =>
+{
+    var c = await svc.GetByIdAsync(id);
+    return c is null ? Results.NotFound() : Results.Json(c);
+});
+
+app.MapPost("/api/complements", async (HttpRequest req, PizzariaGourmet.Services.ComplementService svc) =>
+{
+    var complement = await JsonSerializer.DeserializeAsync<PizzariaGourmet.Models.Complement>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (complement == null) return Results.BadRequest();
+    var created = await svc.CreateAsync(complement);
+    return Results.Created($"/api/complements/{created.Id}", created);
+});
+
+app.MapPut("/api/complements/{id:int}", async (int id, HttpRequest req, PizzariaGourmet.Services.ComplementService svc) =>
+{
+    var complement = await JsonSerializer.DeserializeAsync<PizzariaGourmet.Models.Complement>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (complement == null) return Results.BadRequest();
+    var updated = await svc.UpdateAsync(id, complement);
+    return updated is null ? Results.NotFound() : Results.Json(updated);
+});
+
+app.MapDelete("/api/complements/{id:int}", async (int id, PizzariaGourmet.Services.ComplementService svc) =>
+{
+    var ok = await svc.DeleteAsync(id);
+    return ok ? Results.Ok() : Results.NotFound();
+});
+
 app.MapPost("/create-checkout-session", async (HttpRequest req, PizzariaGourmet.Services.OrderService orderSvc) =>
 {
     var stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_KEY");
@@ -118,15 +193,29 @@ app.MapPost("/create-checkout-session", async (HttpRequest req, PizzariaGourmet.
     var paymentMethod = doc.RootElement.TryGetProperty("paymentMethod", out var pm) ? pm.GetString() ?? "card" : "card";
 
     decimal subtotal = 0;
+    decimal baseSubtotal = 0;
     foreach (var item in cartEl.EnumerateArray())
-        subtotal += item.GetProperty("price").GetDecimal() * item.GetProperty("qty").GetInt32();
+    {
+        var basePrice = item.GetProperty("price").GetDecimal() * item.GetProperty("qty").GetInt32();
+        var itemTotal = basePrice;
+        baseSubtotal += basePrice;
 
-    var deliveryFee = subtotal >= 50 ? 0 : 5.00m;
+        if (item.TryGetProperty("complements", out var compsEl) && compsEl.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var comp in compsEl.EnumerateArray())
+                itemTotal += comp.GetProperty("price").GetDecimal() * item.GetProperty("qty").GetInt32();
+        }
+
+        subtotal += itemTotal;
+    }
+
+    var deliveryFee = baseSubtotal >= 50 ? 0 : 5.00m;
 
     var order = new PizzariaGourmet.Models.Order
     {
         CustomerName = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "",
         CustomerPhone = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("phone", out var ph) ? ph.GetString() ?? "" : "",
+        CustomerEmail = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("email", out var em) ? em.GetString() ?? "" : "",
         CustomerAddress = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("address", out var a) ? a.GetString() ?? "" : "",
         CustomerCPF = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("cpf", out var cpf) ? cpf.GetString() ?? "" : "",
         CustomerNotes = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("notes", out var notes) ? notes.GetString() ?? "" : "",
@@ -164,15 +253,30 @@ app.MapPost("/create-checkout-session", async (HttpRequest req, PizzariaGourmet.
 
     foreach (var item in cartEl.EnumerateArray())
     {
+        var itemName = item.GetProperty("name").GetString() ?? "Item";
+        var itemPrice = item.GetProperty("price").GetDecimal();
+
+        if (item.TryGetProperty("complements", out var compsEl) && compsEl.ValueKind == JsonValueKind.Array)
+        {
+            var compNames = new List<string>();
+            foreach (var comp in compsEl.EnumerateArray())
+            {
+                compNames.Add(comp.GetProperty("name").GetString() ?? "");
+                itemPrice += comp.GetProperty("price").GetDecimal();
+            }
+            if (compNames.Count > 0)
+                itemName += " (+" + string.Join(", ", compNames) + ")";
+        }
+
         options.LineItems.Add(new SessionLineItemOptions
         {
             PriceData = new SessionLineItemPriceDataOptions
             {
-                UnitAmount = (long)(item.GetProperty("price").GetDecimal() * 100),
+                UnitAmount = (long)(itemPrice * 100),
                 Currency = "brl",
                 ProductData = new SessionLineItemPriceDataProductDataOptions
                 {
-                    Name = item.GetProperty("name").GetString()
+                    Name = itemName
                 }
             },
             Quantity = item.GetProperty("qty").GetInt32()

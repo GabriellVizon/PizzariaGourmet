@@ -12,6 +12,7 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<Client> Clients => Set<Client>();
+    public DbSet<Complement> Complements => Set<Complement>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -38,6 +39,13 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
             entity.ToTable("Clients");
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Phone).IsUnique();
+        });
+
+        builder.Entity<Complement>(entity =>
+        {
+            entity.ToTable("Complements");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Price).HasColumnType("decimal(10,2)");
         });
     }
 }

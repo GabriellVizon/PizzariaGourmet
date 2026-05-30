@@ -8,7 +8,11 @@
   <div class="container">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <h2 style="margin:0">📦 Pedidos</h2>
-      <a href="/Admin/Products" style="color:var(--brand);font-weight:600;text-decoration:none">Gerenciar Produtos</a>
+      <div style="display:flex;gap:16px;align-items:center">
+        <a href="/Admin/Products" style="color:var(--brand);font-weight:600;text-decoration:none">Produtos</a>
+        <a href="/Admin/Complements" style="color:var(--brand);font-weight:600;text-decoration:none">Complementos</a>
+        <a href="/Admin/Settings" style="color:var(--text-light);font-weight:600;text-decoration:none">Config</a>
+      </div>
     </div>
 
     @if (Model.Orders.Count == 0)

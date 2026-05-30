@@ -20,7 +20,6 @@
       <button class="mobile-menu-btn" aria-label="Menu">☰</button>
       <nav class="top-nav">
         <a href="/">Cardápio</a>
-        <a href="/Checkout">Checkout</a>
         <a href="https://wa.me/5524992206707?text=Oi!%20Gostaria%20de%20fazer%20um%20pedido">WhatsApp</a>
         <a href="#" class="nav-cart-btn" data-action="open-cart">
           🛒 Carrinho
@@ -75,10 +74,52 @@
     </div>
   </div>
 
-  <!-- WhatsApp Float -->
-  <a class="whatsapp-float" href="https://wa.me/5524992206707?text=Oi!%20Gostaria%20de%20fazer%20um%20pedido" target="_blank" rel="noopener" title="Fale conosco no WhatsApp">
-    💬
-  </a>
+  <!-- Size Modal -->
+  <div id="size-overlay" class="complement-overlay"></div>
+  <div id="size-modal" class="size-modal">
+    <div class="complement-modal-header">
+      <h3 id="size-modal-title">Escolha o Tamanho</h3>
+      <button class="complement-modal-close" data-action="close-size">✕</button>
+    </div>
+    <div class="size-modal-body">
+      <div id="size-list" class="size-list"></div>
+    </div>
+    <div class="complement-modal-footer">
+      <button class="btn-complement-confirm" id="size-modal-confirm">
+        Continuar →
+      </button>
+    </div>
+  </div>
+
+  <!-- Complement Modal -->
+  <div id="complement-overlay" class="complement-overlay"></div>
+  <div id="complement-modal" class="complement-modal">
+    <div class="complement-modal-header">
+      <h3 id="complement-modal-title">Complementos</h3>
+      <button class="complement-modal-close" data-action="close-complement">✕</button>
+    </div>
+    <div class="complement-modal-body">
+      <div class="complement-modal-hint">Escolha até <strong>3 complementos</strong> para esta pizza:</div>
+      <div id="complement-list" class="complement-list"></div>
+    </div>
+    <div class="complement-modal-footer">
+      <div class="complement-modal-qty-wrap">
+        <span class="complement-modal-qty-label">Quantidade</span>
+        <div class="complement-modal-qty-controls">
+          <button id="complement-modal-dec">−</button>
+          <span id="complement-modal-qty">1</span>
+          <button id="complement-modal-inc">+</button>
+        </div>
+      </div>
+      <div class="complement-modal-total-row">
+        <span class="complement-modal-total-label">Valor unitário</span>
+        <span class="complement-modal-total" id="complement-modal-total">R$ 0,00</span>
+      </div>
+      <button class="btn-complement-confirm" id="complement-modal-confirm">
+        Adicionar ao Carrinho
+      </button>
+    </div>
+  </div>
 
   <footer class="site-footer">© @DateTime.Now.Year Pizzaria Gourmet — Delivery em Paraíba do Sul</footer>
 
