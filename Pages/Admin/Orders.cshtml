@@ -4,20 +4,61 @@
     Layout = "_Layout";
 }
 
-<h2>Pedidos</h2>
+<div class="admin-page">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="margin:0">📦 Pedidos</h2>
+      <a href="/Admin/Products" style="color:var(--brand);font-weight:600;text-decoration:none">Gerenciar Produtos</a>
+    </div>
 
-<table>
-  <thead><tr><th>Id</th><th>Criado</th><th>Status</th><th>Ações</th></tr></thead>
-  <tbody>
-  @foreach(var o in Model.Orders){
-    <tr>
-      <td>@o.Id</td>
-      <td>@o.CreatedAt</td>
-      <td>@o.Status</td>
-      <td>
-        <a href="/Admin/Order?id=@o.Id">Ver</a>
-      </td>
-    </tr>
-  }
-  </tbody>
-</table>
+    @if (Model.Orders.Count == 0)
+    {
+      <div class="admin-panel" style="text-align:center;color:var(--text-light)">
+        Nenhum pedido recebido ainda.
+      </div>
+    }
+    else
+    {
+      <div class="admin-panel" style="padding:0;overflow-x:auto">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Pedido</th>
+              <th>Cliente</th>
+              <th>Total</th>
+              <th>Pagamento</th>
+              <th>Data</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach (var o in Model.Orders)
+            {
+              <tr>
+                <td style="font-family:monospace;font-size:0.8rem">#@o.Id[..6]</td>
+                <td>@o.CustomerName</td>
+                <td><strong>R$ @o.Total.ToString("F2")</strong></td>
+                <td>@o.PaymentMethod</td>
+                <td style="font-size:0.8rem;white-space:nowrap">@o.CreatedAt</td>
+                <td>
+                  <span style="display:inline-block;padding:2px 10px;border-radius:50px;font-size:0.75rem;font-weight:700;
+                    @(o.Status == "paid" ? "background:#27ae60;color:#fff" :
+                      o.Status == "pending" ? "background:var(--accent);color:#fff" :
+                      o.Status == "delivered" ? "background:var(--brand);color:#fff" :
+                      o.Status == "cancelled" ? "background:#e74c3c;color:#fff" :
+                      "background:var(--bg);color:var(--text)")">
+                    @o.Status
+                  </span>
+                </td>
+                <td>
+                  <a href="/Admin/Order?id=@o.Id" style="color:var(--brand);font-weight:600;text-decoration:none">Detalhes</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

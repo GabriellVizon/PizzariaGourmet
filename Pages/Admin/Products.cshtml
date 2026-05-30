@@ -3,36 +3,51 @@
   Layout = "_Layout";
 }
 
-<h2>Gerenciar Produtos</h2>
+<div class="admin-page">
+  <div class="container">
+    <h2>Gerenciar Produtos</h2>
 
-<div class="admin-panel">
-  <form id="product-form">
-    <input type="hidden" name="id" />
-    <div>
-      <label>Nome</label>
-      <input name="name" required />
+    <div class="admin-panel">
+      <form id="product-form">
+        <input type="hidden" name="id" />
+        <div>
+          <label>Nome</label>
+          <input name="name" required />
+        </div>
+        <div>
+          <label>Descrição</label>
+          <textarea name="description" rows="2"></textarea>
+        </div>
+        <div>
+          <label>Preço (R$)</label>
+          <input name="price" type="number" step="0.01" required />
+        </div>
+        <div>
+          <label>Imagem (URL)</label>
+          <input name="image" placeholder="https://..." />
+        </div>
+        <div>
+          <label>Categoria</label>
+          <select name="category">
+            <option value="">Selecione</option>
+            <option value="Clássica">Clássica</option>
+            <option value="Especial">Especial</option>
+            <option value="Premium">Premium</option>
+            <option value="Bebida">Bebida</option>
+          </select>
+        </div>
+        <div style="margin-top:12px">
+          <button id="save-product" type="submit">Salvar</button>
+          <button id="reset-form" type="button">Limpar</button>
+        </div>
+      </form>
     </div>
-    <div>
-      <label>Descrição</label>
-      <input name="description" />
-    </div>
-    <div>
-      <label>Preço (ex: 39.90)</label>
-      <input name="price" type="number" step="0.01" required />
-    </div>
-    <div>
-      <label>Imagem (URL)</label>
-      <input name="image" />
-    </div>
-    <div style="margin-top:8px">
-      <button id="save-product" type="submit">Salvar</button>
-      <button id="reset-form" type="button">Limpar</button>
-    </div>
-  </form>
 
-  <hr />
-
-  <div id="products-list">Carregando...</div>
+    <div class="admin-panel">
+      <h3>Produtos Cadastrados</h3>
+      <div id="products-list">Carregando...</div>
+    </div>
+  </div>
 </div>
 
 <script src="/js/admin-products.js"></script>

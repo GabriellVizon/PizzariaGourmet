@@ -3,50 +3,173 @@
   Layout = "_Layout";
 }
 
-<h2>Checkout</h2>
-<form id="checkout-form">
-  <label>Nome</label>
-  <input name="name" required />
-  <label>Telefone</label>
-  <input name="phone" required />
-  <label>Endereço</label>
-  <input name="address" required />
-  <label>Observações (opcional)</label>
-  <textarea name="notes"></textarea>
-  <div style="margin-top:10px">
-    <button type="submit">Pagar / Enviar pedido</button>
-  </div>
-</form>
+<div class="checkout-page">
+  <div class="container">
+    <div class="checkout-grid">
+      <div class="checkout-form-wrap">
+        <h2>📋 Dados da Entrega</h2>
+        <form id="checkout-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Nome completo</label>
+              <input id="name" name="name" required placeholder="Seu nome" />
+            </div>
+            <div class="form-group">
+              <label for="phone">Telefone / WhatsApp</label>
+              <input id="phone" name="phone" required placeholder="(24) 99999-9999" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="address">Endereço de entrega</label>
+            <input id="address" name="address" required placeholder="Rua, número, bairro, complemento" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cpf">CPF (para nota fiscal)</label>
+              <input id="cpf" name="cpf" placeholder="000.000.000-00" />
+            </div>
+            <div class="form-group">
+              <label for="number">Número</label>
+              <input id="number" name="number" placeholder="Nº" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="notes">Observações</label>
+            <textarea id="notes" name="notes" placeholder="Alguma observação? Ex: sem cebola, ponto da massa..."></textarea>
+          </div>
 
-<div id="checkout-result"></div>
+          <h2 style="margin-top:32px">💳 Pagamento</h2>
+          <input type="hidden" id="payment-method" name="paymentMethod" value="card" />
+          <div class="payment-options">
+            <div class="payment-option selected" data-method="card">
+              <span class="pay-icon">💳</span>
+              Cartão de Crédito
+            </div>
+            <div class="payment-option" data-method="pix">
+              <span class="pay-icon">📱</span>
+              Pix
+            </div>
+            <div class="payment-option" data-method="cash">
+              <span class="pay-icon">💵</span>
+              Dinheiro
+            </div>
+          </div>
+
+          <div style="margin-top:24px">
+            <button type="submit" class="btn-checkout">
+              Confirmar Pedido →
+            </button>
+          </div>
+        </form>
+        <div id="checkout-result" style="margin-top:16px"></div>
+      </div>
+
+      <div>
+        <div class="checkout-summary">
+          <h3>📄 Resumo do Pedido</h3>
+          <div id="checkout-items"></div>
+          <div class="checkout-summary-item">
+            <span>Subtotal</span>
+            <span id="checkout-subtotal" style="font-weight:600">R$ 0,00</span>
+          </div>
+          <div class="checkout-summary-item">
+            <span>Taxa de entrega</span>
+            <span id="checkout-delivery" style="font-weight:600">R$ 0,00</span>
+          </div>
+          <div class="checkout-summary-total">
+            <span>Total</span>
+            <span class="cs-total-amount" id="checkout-total">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
-document.getElementById('checkout-form').addEventListener('submit', async (e)=>{
+const DELIVERY_FEE = 5.00;
+const FREE_DELIVERY_MIN = 50.00;
+
+function formatPrice(p) {
+  return p.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderCheckoutSummary() {
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  const el = document.getElementById('checkout-items');
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const delivery = subtotal >= FREE_DELIVERY_MIN ? 0 : DELIVERY_FEE;
+  const total = subtotal + delivery;
+
+  if (cart.length === 0) {
+    el.innerHTML = '<div style="color:var(--text-light);text-align:center;padding:16px 0">Carrinho vazio</div>';
+    document.querySelector('.btn-checkout').disabled = true;
+  } else {
+    el.innerHTML = cart.map(i => `
+      <div class="checkout-summary-item">
+        <span class="cs-name">${i.name}</span>
+        <span class="cs-qty">x${i.qty}</span>
+        <span class="cs-price">R$ ${formatPrice(i.price * i.qty)}</span>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('checkout-subtotal').textContent = `R$ ${formatPrice(subtotal)}`;
+  document.getElementById('checkout-delivery').textContent = delivery === 0 ? 'Grátis' : `R$ ${formatPrice(delivery)}`;
+  document.getElementById('checkout-total').textContent = `R$ ${formatPrice(total)}`;
+}
+
+renderCheckoutSummary();
+
+document.getElementById('checkout-form').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const btn = e.target.querySelector('.btn-checkout');
+  btn.textContent = '⏳ Processando...';
+  btn.disabled = true;
+
   const data = new FormData(e.target);
+  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+  if (cart.length === 0) {
+    alert('Carrinho vazio!');
+    btn.textContent = 'Confirmar Pedido →';
+    btn.disabled = false;
+    return;
+  }
+
   const payload = {
     customer: {
       name: data.get('name'),
       phone: data.get('phone'),
       address: data.get('address'),
+      cpf: data.get('cpf'),
+      number: data.get('number'),
       notes: data.get('notes')
     },
-    cart: JSON.parse(localStorage.getItem('cart')||'[]')
+    paymentMethod: data.get('paymentMethod') || 'card',
+    cart: cart
   };
-  if(payload.cart.length===0){ alert('Carrinho vazio'); return }
 
-  // Criar sessão de checkout no servidor (Stripe) e redirecionar para a URL retornada
-  const res = await fetch('/create-checkout-session',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
-  });
-  const json = await res.json();
-  if(json?.url){
-    // redireciona para Stripe Checkout
-    window.location = json.url;
-  } else {
-    document.getElementById('checkout-result').innerText = json.error || JSON.stringify(json);
+  try {
+    const res = await fetch('/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    if (json?.url) {
+      window.location = json.url;
+    } else {
+      document.getElementById('checkout-result').innerHTML =
+        `<div style="color:var(--brand);padding:12px;background:var(--bg);border-radius:8px">${json.error || 'Erro ao processar pedido'}</div>`;
+      btn.textContent = 'Confirmar Pedido →';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    document.getElementById('checkout-result').innerHTML =
+      `<div style="color:var(--brand)">Erro de conexão. Tente novamente.</div>`;
+    btn.textContent = 'Confirmar Pedido →';
+    btn.disabled = false;
   }
 });
 </script>

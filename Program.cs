@@ -1,95 +1,111 @@
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Stripe;
 using Stripe.Checkout;
-using Microsoft.Data.Sqlite;
-using MailKit.Net.Smtp;
-using MimeKit;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var dbPath = System.IO.Path.Combine(builder.Environment.ContentRootPath, "Data", "app.db");
+System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(dbPath)!);
+builder.Services.AddDbContext<PizzariaGourmet.Data.AppDbContext>(options =>
+    options.UseSqlite($"Data Source={dbPath}"));
+
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+})
+.AddEntityFrameworkStores<PizzariaGourmet.Data.AppDbContext>()
+.AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Admin/Login";
+});
+
+builder.Services.AddScoped<PizzariaGourmet.Services.ProductService>();
+builder.Services.AddScoped<PizzariaGourmet.Services.OrderService>();
+builder.Services.AddScoped<PizzariaGourmet.Services.NotificationService>();
+
 builder.Services.AddRazorPages();
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<PizzariaGourmet.Data.AppDbContext>();
+    await db.Database.EnsureCreatedAsync();
+
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    var adminEmail = app.Configuration["Admin:Email"] ?? "admin@pizzariagourmet.com";
+    var adminPass = app.Configuration["Admin:Password"] ?? "Admin@123";
+
+    if (await userManager.FindByEmailAsync(adminEmail) == null)
+    {
+        var admin = new IdentityUser { UserName = adminEmail, Email = adminEmail };
+        await userManager.CreateAsync(admin, adminPass);
+    }
+
+    if (!await db.Products.AnyAsync())
+    {
+        var jsonPath = System.IO.Path.Combine(builder.Environment.ContentRootPath, "Data", "products.json");
+        if (System.IO.File.Exists(jsonPath))
+        {
+            var json = await System.IO.File.ReadAllTextAsync(jsonPath);
+            var products = JsonSerializer.Deserialize<List<PizzariaGourmet.Models.Product>>(json);
+            if (products != null)
+            {
+                db.Products.AddRange(products);
+                await db.SaveChangesAsync();
+            }
+        }
+    }
+}
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapRazorPages();
 
-// Produtos (arquivo JSON estático)
-app.MapGet("/api/products", async () =>
-{
-    var list = await PizzariaGourmet.Data.ProductsStore.ReadProductsAsync();
-    return Results.Json(list);
-});
+app.MapGet("/api/products", async (PizzariaGourmet.Services.ProductService svc) =>
+    Results.Json(await svc.GetAllAsync()));
 
-app.MapGet("/api/products/{id}", async (int id) =>
+app.MapGet("/api/products/{id:int}", async (int id, PizzariaGourmet.Services.ProductService svc) =>
 {
-    var list = await PizzariaGourmet.Data.ProductsStore.ReadProductsAsync();
-    var p = list.FirstOrDefault(x => x.Id == id);
+    var p = await svc.GetByIdAsync(id);
     return p is null ? Results.NotFound() : Results.Json(p);
 });
 
-app.MapPost("/api/products", async (HttpRequest req) =>
+app.MapPost("/api/products", async (HttpRequest req, PizzariaGourmet.Services.ProductService svc) =>
 {
-    using var sr = new StreamReader(req.Body);
-    var body = await sr.ReadToEndAsync();
-    var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(body) ? "{}" : body);
-    var name = doc.RootElement.GetProperty("name").GetString() ?? "Produto";
-    var desc = doc.RootElement.TryGetProperty("description", out var d) ? d.GetString() ?? "" : "";
-    var price = doc.RootElement.TryGetProperty("price", out var p) && p.TryGetDecimal(out var pd) ? pd : 0m;
-    var image = doc.RootElement.TryGetProperty("image", out var im) ? im.GetString() ?? "" : "";
-
-    var list = await PizzariaGourmet.Data.ProductsStore.ReadProductsAsync();
-    var nextId = list.Any() ? list.Max(x => x.Id) + 1 : 1;
-    var prod = new PizzariaGourmet.Data.Product(nextId, name, desc, price, image);
-    list.Add(prod);
-    await PizzariaGourmet.Data.ProductsStore.WriteProductsAsync(list);
-    return Results.Created($"/api/products/{prod.Id}", prod);
+    var product = await JsonSerializer.DeserializeAsync<PizzariaGourmet.Models.Product>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (product == null) return Results.BadRequest();
+    var created = await svc.CreateAsync(product);
+    return Results.Created($"/api/products/{created.Id}", created);
 });
 
-app.MapPut("/api/products/{id}", async (int id, HttpRequest req) =>
+app.MapPut("/api/products/{id:int}", async (int id, HttpRequest req, PizzariaGourmet.Services.ProductService svc) =>
 {
-    using var sr = new StreamReader(req.Body);
-    var body = await sr.ReadToEndAsync();
-    var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(body) ? "{}" : body);
-    var list = await PizzariaGourmet.Data.ProductsStore.ReadProductsAsync();
-    var idx = list.FindIndex(x => x.Id == id);
-    if (idx < 0) return Results.NotFound();
-    var name = doc.RootElement.TryGetProperty("name", out var n) ? n.GetString() ?? list[idx].Name : list[idx].Name;
-    var desc = doc.RootElement.TryGetProperty("description", out var d) ? d.GetString() ?? list[idx].Description : list[idx].Description;
-    var price = doc.RootElement.TryGetProperty("price", out var p) && p.TryGetDecimal(out var pd) ? pd : list[idx].Price;
-    var image = doc.RootElement.TryGetProperty("image", out var im) ? im.GetString() ?? list[idx].Image : list[idx].Image;
-    list[idx] = new PizzariaGourmet.Data.Product(id, name, desc, price, image);
-    await PizzariaGourmet.Data.ProductsStore.WriteProductsAsync(list);
-    return Results.Ok(list[idx]);
+    var product = await JsonSerializer.DeserializeAsync<PizzariaGourmet.Models.Product>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (product == null) return Results.BadRequest();
+    var updated = await svc.UpdateAsync(id, product);
+    return updated is null ? Results.NotFound() : Results.Json(updated);
 });
 
-app.MapDelete("/api/products/{id}", async (int id) =>
+app.MapDelete("/api/products/{id:int}", async (int id, PizzariaGourmet.Services.ProductService svc) =>
 {
-    var list = await PizzariaGourmet.Data.ProductsStore.ReadProductsAsync();
-    var idx = list.FindIndex(x => x.Id == id);
-    if (idx < 0) return Results.NotFound();
-    list.RemoveAt(idx);
-    await PizzariaGourmet.Data.ProductsStore.WriteProductsAsync(list);
-    return Results.Ok();
+    var ok = await svc.DeleteAsync(id);
+    return ok ? Results.Ok() : Results.NotFound();
 });
 
-// Endpoint de checkout simples (mock) mantido para compatibilidade
-app.MapPost("/api/checkout", async (HttpRequest req) =>
-{
-    using var sr = new StreamReader(req.Body);
-    var body = await sr.ReadToEndAsync();
-    return Results.Json(new { success = true, message = "Pagamento mock recebido" });
-});
-
-// Integração com Stripe: criar sessão de checkout
-app.MapPost("/create-checkout-session", async (HttpRequest req) =>
+app.MapPost("/create-checkout-session", async (HttpRequest req, PizzariaGourmet.Services.OrderService orderSvc) =>
 {
     var stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_KEY");
     var domain = Environment.GetEnvironmentVariable("DOMAIN") ?? "http://localhost:5000";
-    if (string.IsNullOrEmpty(stripeKey))
-        return Results.BadRequest(new { error = "STRIPE_API_KEY not configured" });
-
-    StripeConfiguration.ApiKey = stripeKey;
 
     using var sr = new StreamReader(req.Body);
     var body = await sr.ReadToEndAsync();
@@ -98,30 +114,43 @@ app.MapPost("/create-checkout-session", async (HttpRequest req) =>
     if (!doc.RootElement.TryGetProperty("cart", out var cartEl) || cartEl.ValueKind != JsonValueKind.Array)
         return Results.BadRequest(new { error = "Cart missing" });
 
-    // Criar um orderId e salvar o pedido temporariamente no SQLite para reconciliar depois no webhook
-    var orderId = Guid.NewGuid().ToString();
-    Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, "Data"));
-    var dbPath = Path.Combine(AppContext.BaseDirectory, "Data", "app.db");
-    using (var conn = new SqliteConnection($"Data Source={dbPath}"))
-    {
-        await conn.OpenAsync();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = @"CREATE TABLE IF NOT EXISTS Orders (
-            Id TEXT PRIMARY KEY,
-            CreatedAt TEXT,
-            Status TEXT,
-            Payload TEXT
-        );";
-        await cmd.ExecuteNonQueryAsync();
+    var customer = doc.RootElement.TryGetProperty("customer", out var c) ? c : default;
+    var paymentMethod = doc.RootElement.TryGetProperty("paymentMethod", out var pm) ? pm.GetString() ?? "card" : "card";
 
-        var insert = conn.CreateCommand();
-        insert.CommandText = "INSERT INTO Orders (Id, CreatedAt, Status, Payload) VALUES ($id, $created, $status, $payload);";
-        insert.Parameters.AddWithValue("$id", orderId);
-        insert.Parameters.AddWithValue("$created", DateTime.UtcNow.ToString("o"));
-        insert.Parameters.AddWithValue("$status", "pending");
-        insert.Parameters.AddWithValue("$payload", body);
-        await insert.ExecuteNonQueryAsync();
+    decimal subtotal = 0;
+    foreach (var item in cartEl.EnumerateArray())
+        subtotal += item.GetProperty("price").GetDecimal() * item.GetProperty("qty").GetInt32();
+
+    var deliveryFee = subtotal >= 50 ? 0 : 5.00m;
+
+    var order = new PizzariaGourmet.Models.Order
+    {
+        CustomerName = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "",
+        CustomerPhone = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("phone", out var ph) ? ph.GetString() ?? "" : "",
+        CustomerAddress = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("address", out var a) ? a.GetString() ?? "" : "",
+        CustomerCPF = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("cpf", out var cpf) ? cpf.GetString() ?? "" : "",
+        CustomerNotes = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("notes", out var notes) ? notes.GetString() ?? "" : "",
+        Items = body,
+        Status = "pending",
+        PaymentMethod = paymentMethod == "stripe" ? "stripe" : paymentMethod,
+        Subtotal = subtotal,
+        DeliveryFee = deliveryFee,
+        Total = subtotal + deliveryFee
+    };
+
+    await orderSvc.CreateAsync(order);
+
+    // For Pix or Cash, send the order directly without Stripe
+    if (paymentMethod != "card")
+    {
+        return Results.Json(new { url = domain + "/Success?order_id=" + order.Id, id = order.Id, orderId = order.Id });
     }
+
+    // Stripe Checkout for card payments
+    if (string.IsNullOrEmpty(stripeKey))
+        return Results.BadRequest(new { error = "STRIPE_API_KEY not configured" });
+
+    StripeConfiguration.ApiKey = stripeKey;
 
     var options = new SessionCreateOptions
     {
@@ -130,47 +159,41 @@ app.MapPost("/create-checkout-session", async (HttpRequest req) =>
         SuccessUrl = domain + "/Success?session_id={CHECKOUT_SESSION_ID}",
         CancelUrl = domain + "/Checkout",
         LineItems = new List<SessionLineItemOptions>(),
-        ClientReferenceId = orderId
+        ClientReferenceId = order.Id
     };
 
     foreach (var item in cartEl.EnumerateArray())
     {
-        var name = item.GetProperty("name").GetString();
-        var price = item.GetProperty("price").GetDecimal();
-        var qty = item.GetProperty("qty").GetInt32();
-
         options.LineItems.Add(new SessionLineItemOptions
         {
             PriceData = new SessionLineItemPriceDataOptions
             {
-                UnitAmount = (long)(price * 100), // em centavos
+                UnitAmount = (long)(item.GetProperty("price").GetDecimal() * 100),
                 Currency = "brl",
                 ProductData = new SessionLineItemPriceDataProductDataOptions
                 {
-                    Name = name
+                    Name = item.GetProperty("name").GetString()
                 }
             },
-            Quantity = qty
+            Quantity = item.GetProperty("qty").GetInt32()
         });
     }
 
-    var service = new SessionService();
-    var session = await service.CreateAsync(options);
+    var sessionService = new SessionService();
+    var session = await sessionService.CreateAsync(options);
 
-    return Results.Json(new { url = session.Url, id = session.Id, orderId });
+    return Results.Json(new { url = session.Url, id = session.Id, orderId = order.Id });
 });
 
-// Endpoint para recuperar sessão (para a página de sucesso)
 app.MapGet("/session/{id}", async (string id) =>
 {
     var stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_KEY");
     if (string.IsNullOrEmpty(stripeKey))
         return Results.BadRequest(new { error = "STRIPE_API_KEY not configured" });
     StripeConfiguration.ApiKey = stripeKey;
-    var service = new SessionService();
     try
     {
-        var session = await service.GetAsync(id);
+        var session = await new SessionService().GetAsync(id);
         return Results.Json(session);
     }
     catch (Exception ex)
@@ -179,17 +202,14 @@ app.MapGet("/session/{id}", async (string id) =>
     }
 });
 
-// Webhook do Stripe — verifique STRIPE_WEBHOOK_SECRET nas variáveis de ambiente
-app.MapPost("/webhook", async (HttpRequest req) =>
+app.MapPost("/webhook", async (HttpRequest req, PizzariaGourmet.Services.OrderService orderSvc, PizzariaGourmet.Services.NotificationService notifySvc) =>
 {
     var json = await new StreamReader(req.Body).ReadToEndAsync();
     var sigHeader = req.Headers["Stripe-Signature"].FirstOrDefault();
     var webhookSecret = Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET");
+
     if (string.IsNullOrEmpty(webhookSecret))
-    {
-        // Se não configurado, apenas aceite o evento (útil para desenvolvimento)
         return Results.Ok();
-    }
 
     try
     {
@@ -197,88 +217,18 @@ app.MapPost("/webhook", async (HttpRequest req) =>
         if (stripeEvent.Type == Events.CheckoutSessionCompleted)
         {
             var session = stripeEvent.Data.Object as Session;
-            var orderId = session.ClientReferenceId;
+            var orderId = session?.ClientReferenceId;
             if (!string.IsNullOrEmpty(orderId))
             {
-                var dbPath = Path.Combine(AppContext.BaseDirectory, "Data", "app.db");
-                using var conn = new SqliteConnection($"Data Source={dbPath}");
-                await conn.OpenAsync();
-                var update = conn.CreateCommand();
-                update.CommandText = "UPDATE Orders SET Status = $status WHERE Id = $id;";
-                update.Parameters.AddWithValue("$status", "paid");
-                update.Parameters.AddWithValue("$id", orderId);
-                await update.ExecuteNonQueryAsync();
-
-                // Ler payload para enviar notificação por e-mail
-                var select = conn.CreateCommand();
-                select.CommandText = "SELECT Payload FROM Orders WHERE Id = $id;";
-                select.Parameters.AddWithValue("$id", orderId);
-                var payload = (string?)await select.ExecuteScalarAsync();
-                if (!string.IsNullOrEmpty(payload))
-                {
-                    // Enviar e-mail de notificação
-                    var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST");
-                    var smtpPort = int.TryParse(Environment.GetEnvironmentVariable("SMTP_PORT"), out var p) ? p : 587;
-                    var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER");
-                    var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASS");
-                    var toEmail = Environment.GetEnvironmentVariable("NOTIFY_EMAIL_TO");
-                    if (!string.IsNullOrEmpty(smtpHost) && !string.IsNullOrEmpty(toEmail))
-                    {
-                        try
-                        {
-                            var message = new MimeMessage();
-                            message.From.Add(MailboxAddress.Parse(smtpUser ?? "noreply@localhost"));
-                            message.To.Add(MailboxAddress.Parse(toEmail));
-                            message.Subject = $"Novo pedido recebido — {orderId}";
-                            message.Body = new TextPart("plain") { Text = $"Pedido {orderId} confirmado.\n\nDetalhes:\n{payload}" };
-
-                            using var client = new SmtpClient();
-                            await client.ConnectAsync(smtpHost, smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
-                            if (!string.IsNullOrEmpty(smtpUser) && !string.IsNullOrEmpty(smtpPass))
-                                await client.AuthenticateAsync(smtpUser, smtpPass);
-                            await client.SendAsync(message);
-                            await client.DisconnectAsync(true);
-                        }
-                        catch
-                        {
-                            // falha no envio do e-mail não bloqueia o webhook
-                        }
-                    // Enviar SMS/WhatsApp via Twilio, se configurado
-                    var twilioSid = Environment.GetEnvironmentVariable("TWILIO_ACCOUNT_SID");
-                    var twilioToken = Environment.GetEnvironmentVariable("TWILIO_AUTH_TOKEN");
-                    var twilioFrom = Environment.GetEnvironmentVariable("TWILIO_FROM");
-                    var notifyPhone = Environment.GetEnvironmentVariable("NOTIFY_PHONE_TO");
-                    if (!string.IsNullOrEmpty(twilioSid) && !string.IsNullOrEmpty(twilioToken) && !string.IsNullOrEmpty(twilioFrom) && !string.IsNullOrEmpty(notifyPhone))
-                    {
-                        try
-                        {
-                            var clientTw = new System.Net.Http.HttpClient();
-                            var accountSid = twilioSid;
-                            var authToken = twilioToken;
-                            var url = $"https://api.twilio.com/2010-04-01/Accounts/{accountSid}/Messages.json";
-                            var form = new List<KeyValuePair<string, string>>
-                            {
-                                new KeyValuePair<string,string>("To", notifyPhone),
-                                new KeyValuePair<string,string>("From", twilioFrom),
-                                new KeyValuePair<string,string>("Body", $"Pedido {orderId} confirmado. Detalhes: {payload.Substring(0, Math.Min(200, payload.Length))}")
-                            };
-                            var reqMsg = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Post, url) { Content = new System.Net.Http.FormUrlEncodedContent(form) };
-                            var byteArray = System.Text.Encoding.ASCII.GetBytes($"{accountSid}:{authToken}");
-                            reqMsg.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-                            await clientTw.SendAsync(reqMsg);
-                        }
-                        catch
-                        {
-                            // ignore
-                        }
-                    }
-                    }
-                }
+                await orderSvc.UpdateStatusAsync(orderId, "paid");
+                var order = await orderSvc.GetByIdAsync(orderId);
+                if (order != null)
+                    await notifySvc.SendNotificationsAsync(orderId, order.Items);
             }
         }
         return Results.Ok();
     }
-    catch (Exception)
+    catch
     {
         return Results.BadRequest();
     }

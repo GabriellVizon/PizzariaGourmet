@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Etec\\Desktop\\PizzariaGourmet\\PizzariaGourmet.csproj": {}
+    "C:\\Users\\etec\\Desktop\\PizzariaGourmet\\PizzariaGourmet.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Etec\\Desktop\\PizzariaGourmet\\PizzariaGourmet.csproj": {
+    "C:\\Users\\etec\\Desktop\\PizzariaGourmet\\PizzariaGourmet.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Etec\\Desktop\\PizzariaGourmet\\PizzariaGourmet.csproj",
+        "projectUniqueName": "C:\\Users\\etec\\Desktop\\PizzariaGourmet\\PizzariaGourmet.csproj",
         "projectName": "PizzariaGourmet",
-        "projectPath": "C:\\Users\\Etec\\Desktop\\PizzariaGourmet\\PizzariaGourmet.csproj",
-        "packagesPath": "C:\\Users\\Etec\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Etec\\Desktop\\PizzariaGourmet\\obj\\",
+        "projectPath": "C:\\Users\\etec\\Desktop\\PizzariaGourmet\\PizzariaGourmet.csproj",
+        "packagesPath": "C:\\Users\\etec\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\etec\\Desktop\\PizzariaGourmet\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Etec\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\etec\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -54,9 +54,19 @@
               "target": "Package",
               "version": "[4.1.0, )"
             },
-            "Microsoft.Data.Sqlite": {
+            "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
               "target": "Package",
-              "version": "[8.0.0, )"
+              "version": "[10.0.8, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[10.0.8, )"
+            },
+            "Microsoft.EntityFrameworkCore.Sqlite": {
+              "target": "Package",
+              "version": "[10.0.8, )"
             },
             "Stripe.net": {
               "target": "Package",
@@ -86,7 +96,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

@@ -3,23 +3,85 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pizzaria Gourmet</title>
+  <title>Pizzaria Gourmet - Delivery</title>
   <link rel="stylesheet" href="/css/site.css" />
-  <meta name="description" content="Cardápio online Pizzaria Gourmet" />
-  <!-- JSON-LD e OpenGraph podem ser adicionados aqui -->
+  <meta name="description" content="Cardápio online da Pizzaria Gourmet - Delivery em Paraíba do Sul" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
   <header class="site-header">
-    <div class="container">
-      <a class="logo" href="/">Pizzaria Gourmet</a>
+    <div class="container header-inner">
+      <a class="logo" href="/">
+        <span class="logo-icon">P</span>
+        Pizzaria Gourmet
+      </a>
+      <button class="mobile-menu-btn" aria-label="Menu">☰</button>
       <nav class="top-nav">
-        <a href="#products">Cardápio</a>
+        <a href="/">Cardápio</a>
         <a href="/Checkout">Checkout</a>
-        <a href="https://wa.me/5524992206707?text=Oi">WhatsApp</a>
+        <a href="https://wa.me/5524992206707?text=Oi!%20Gostaria%20de%20fazer%20um%20pedido">WhatsApp</a>
+        <a href="#" class="nav-cart-btn" data-action="open-cart">
+          🛒 Carrinho
+          <span class="cart-badge" id="cart-count" style="display:none">0</span>
+        </a>
       </nav>
     </div>
   </header>
-  <main class="container">@RenderBody()</main>
-  <footer class="site-footer">© Pizzaria Gourmet</footer>
+
+  <main>@RenderBody()</main>
+
+  <!-- Cart Sidebar -->
+  <div id="cart-overlay" class="cart-overlay"></div>
+  <div id="cart-sidebar" class="cart-sidebar">
+    <div class="cart-header">
+      <h3>🛒 Meu Carrinho</h3>
+      <button class="cart-close" data-action="close-cart">✕</button>
+    </div>
+    <div id="cart-items" class="cart-items">
+      <div class="cart-empty">
+        <div class="cart-empty-icon">🛒</div>
+        <div>Seu carrinho está vazio</div>
+      </div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-subtotal">
+        <span>Subtotal</span>
+        <span id="cart-subtotal">R$ 0,00</span>
+      </div>
+      <div class="cart-delivery" id="cart-delivery">
+        <span>Taxa de entrega</span>
+        <span>R$ 0,00</span>
+      </div>
+      <div class="cart-total">
+        <span>Total</span>
+        <span class="cart-total-amount" id="cart-total">R$ 0,00</span>
+      </div>
+      <button class="btn-checkout" id="goto-checkout" disabled>
+        Finalizar Pedido →
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating Cart (Mobile) -->
+  <div id="cart-floating" class="cart-floating" style="display:none">
+    <div class="cart-floating-inner">
+      <div class="cart-floating-info">
+        <span class="cart-floating-count" id="floating-count">0 itens</span>
+        <span class="cart-floating-total" id="floating-total">R$ 0,00</span>
+      </div>
+      <button class="btn-cart-open" data-action="open-cart">🛒 Ver Carrinho</button>
+    </div>
+  </div>
+
+  <!-- WhatsApp Float -->
+  <a class="whatsapp-float" href="https://wa.me/5524992206707?text=Oi!%20Gostaria%20de%20fazer%20um%20pedido" target="_blank" rel="noopener" title="Fale conosco no WhatsApp">
+    💬
+  </a>
+
+  <footer class="site-footer">© @DateTime.Now.Year Pizzaria Gourmet — Delivery em Paraíba do Sul</footer>
+
+  <script src="/js/site.js"></script>
 </body>
 </html>

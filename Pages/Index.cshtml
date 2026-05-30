@@ -4,18 +4,19 @@
 }
 
 <div class="hero">
-  <h1>Pizzaria Gourmet — Cardápio</h1>
-  <p>Escolha seus itens e finalize o pedido.</p>
-</div>
+  <div class="hero-badge">🍕 Delivery em Paraíba do Sul</div>
+  <h1>O melhor <span class="hero-highlight">sabor</span><br>da cidade</h1>
+  <p>Escolha suas pizzas, adicione ao carrinho e receba em casa. Massa artesanal e ingredientes selecionados.</p>
 
-<div id="products" class="products-grid">Carregando produtos...</div>
-
-<div id="cart" class="cart">
-  <h3>Carrinho</h3>
-  <div id="cart-items">Sem itens no carrinho</div>
-  <div class="cart-actions">
-    <button id="goto-checkout">Finalizar pedido</button>
+  <div class="category-tabs">
+    <button class="category-tab active" data-cat="all">Todos</button>
+    <button class="category-tab" data-cat="Clássica">Clássicas</button>
+    <button class="category-tab" data-cat="Especial">Especiais</button>
+    <button class="category-tab" data-cat="Premium">Premium</button>
+    <button class="category-tab" data-cat="Bebida">Bebidas</button>
   </div>
 </div>
+
+<div id="products" class="products-grid">Carregando...</div>
 
 <script src="/js/site.js"></script>

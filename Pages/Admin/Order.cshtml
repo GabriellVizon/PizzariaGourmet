@@ -4,22 +4,94 @@
     Layout = "_Layout";
 }
 
-<h2>Pedido @Model.Id</h2>
+<div class="admin-page">
+  <div class="container">
+    <h2>Pedido @Model.Id?[..8]</h2>
 
-<div>
-  <p><strong>Criado:</strong> @Model.CreatedAt</p>
-  <p><strong>Status:</strong> @Model.Status</p>
-  <h3>Payload</h3>
-  <pre>@Model.Payload</pre>
+    <div class="admin-panel">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <p><strong>Cliente:</strong> @Model.CustomerName</p>
+          <p><strong>Telefone:</strong> @Model.CustomerPhone</p>
+          <p><strong>Endereço:</strong> @Model.CustomerAddress</p>
+          <p><strong>CPF:</strong> @Model.CustomerCPF</p>
+        </div>
+        <div>
+          <p><strong>Criado:</strong> @Model.CreatedAt</p>
+          <p><strong>Status:</strong> <span style="color:var(--brand);font-weight:700">@Model.Status</span></p>
+          <p><strong>Pagamento:</strong> @Model.PaymentMethod</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-panel">
+      <h3>Itens do Pedido</h3>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Qtd</th>
+            <th>Preço</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody id="order-items-body">
+        </tbody>
+      </table>
+      <div style="margin-top:16px;border-top:2px solid var(--text);padding-top:12px">
+        <p><strong>Subtotal:</strong> R$ <span id="order-subtotal">0,00</span></p>
+        <p><strong>Frete:</strong> R$ <span id="order-delivery">@Model.DeliveryFee.ToString("F2")</span></p>
+        <p style="font-size:1.1rem"><strong>Total:</strong> R$ <span id="order-total">@Model.Total.ToString("F2")</span></p>
+      </div>
+    </div>
+
+    <form method="post" class="admin-panel">
+      <h3>Atualizar Status</h3>
+      <div style="display:flex;gap:12px;align-items:end">
+        <div style="flex:1">
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            <option value="pending" selected="@(Model.Status == "pending")">Pendente</option>
+            <option value="paid" selected="@(Model.Status == "paid")">Pago</option>
+            <option value="preparing" selected="@(Model.Status == "preparing")">Preparando</option>
+            <option value="delivering" selected="@(Model.Status == "delivering")">Saiu para entrega</option>
+            <option value="delivered" selected="@(Model.Status == "delivered")">Entregue</option>
+            <option value="cancelled" selected="@(Model.Status == "cancelled")">Cancelado</option>
+          </select>
+        </div>
+        <div>
+          <button type="submit">Salvar</button>
+          <button type="submit" formaction="?delete=1" onclick="return confirm('Deletar pedido?')" style="background:#e74c3c">Deletar</button>
+          <a href="/Admin/Orders" style="display:inline-block;padding:8px 20px;border:1px solid var(--border);border-radius:50px;text-decoration:none;color:var(--text);font-weight:600">← Voltar</a>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 
-<form method="post">
-  <label>Atualizar status:</label>
-  <select name="status">
-    <option value="pending" selected="@(Model.Status=="pending")">pending</option>
-    <option value="paid" selected="@(Model.Status=="paid")">paid</option>
-    <option value="cancelled" selected="@(Model.Status=="cancelled")">cancelled</option>
-  </select>
-  <button type="submit">Salvar</button>
-  <button type="submit" formaction="?delete=1">Deletar</button>
-</form>
+<script>
+try {
+  const payload = @Html.Raw(Model.Payload);
+  const items = payload?.cart || (Array.isArray(payload) ? payload : []);
+  const tbody = document.getElementById('order-items-body');
+  let subtotal = 0;
+  if (items.length > 0) {
+    tbody.innerHTML = items.map(i => {
+      const st = (i.price || 0) * (i.qty || 1);
+      subtotal += st;
+      return `<tr>
+        <td>${i.name || i.productName || 'Produto'}</td>
+        <td>${i.qty || 1}</td>
+        <td>R$ ${(i.price || 0).toFixed(2)}</td>
+        <td>R$ ${st.toFixed(2)}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    tbody.innerHTML = '<tr><td colspan="4">Itens não disponíveis (formato raw)</td></tr>';
+  }
+  document.getElementById('order-subtotal').textContent = subtotal.toFixed(2);
+  document.getElementById('order-total').textContent = (subtotal + @Model.DeliveryFee).toFixed(2);
+} catch(e) {
+  document.getElementById('order-items-body').innerHTML = '<tr><td colspan="4">Erro ao parsear itens</td></tr>';
+}
+</script>

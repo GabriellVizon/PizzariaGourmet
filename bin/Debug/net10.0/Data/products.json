@@ -2,43 +2,109 @@
   {
     "id": 1,
     "name": "Pizza Margherita",
-    "description": "Molho de tomate, muçarela e manjericão fresco.",
+    "description": "Molho de tomate fresco, muçarela de búfala e manjericão.",
     "price": 34.90,
-    "image": "https://picsum.photos/seed/pizza1/600/400"
+    "image": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=600&h=400&fit=crop",
+    "category": "Clássica",
+    "available": true
   },
   {
     "id": 2,
     "name": "Pizza Calabresa",
-    "description": "Calabresa fatiada, cebola e azeitonas.",
+    "description": "Calabresa fatiada, cebola roxa, azeitonas pretas e orégano.",
     "price": 38.50,
-    "image": "https://picsum.photos/seed/pizza2/600/400"
+    "image": "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=600&h=400&fit=crop",
+    "category": "Clássica",
+    "available": true
   },
   {
     "id": 3,
     "name": "Pizza Portuguesa",
-    "description": "Presunto, ovos, cebola, ervilha e azeitona.",
+    "description": "Presunto, ovos, cebola, ervilha, azeitona e muçarela.",
     "price": 42.00,
-    "image": "https://picsum.photos/seed/pizza3/600/400"
+    "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=400&fit=crop",
+    "category": "Clássica",
+    "available": true
   },
   {
     "id": 4,
     "name": "Pizza Quatro Queijos",
-    "description": "Muçarela, provolone, gorgonzola e parmesão.",
+    "description": "Muçarela, provolone, gorgonzola e parmesão gratinados.",
     "price": 45.00,
-    "image": "https://picsum.photos/seed/pizza4/600/400"
+    "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&h=400&fit=crop",
+    "category": "Especial",
+    "available": true
   },
   {
     "id": 5,
     "name": "Pizza Frango com Catupiry",
-    "description": "Frango desfiado e catupiry cremoso.",
+    "description": "Frango desfiado temperado e catupiry cremoso.",
     "price": 40.00,
-    "image": "https://picsum.photos/seed/pizza5/600/400"
+    "image": "https://images.unsplash.com/photo-1566843972142-a8fc0f6c7a2b?w=600&h=400&fit=crop",
+    "category": "Especial",
+    "available": true
   },
   {
     "id": 6,
     "name": "Pizza Vegetariana",
-    "description": "Legumes assados e queijo leve.",
+    "description": "Legumes assados, abobrinha, pimentão, tomate seco e queijo leve.",
     "price": 36.50,
-    "image": "https://picsum.photos/seed/pizza6/600/400"
+    "image": "https://images.unsplash.com/photo-1576458088443-04a19bb13da6?w=600&h=400&fit=crop",
+    "category": "Especial",
+    "available": true
+  },
+  {
+    "id": 7,
+    "name": "Pizza Pepperoni",
+    "description": "Pepperoni importado, muçarela e molho especial da casa.",
+    "price": 44.00,
+    "image": "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=600&h=400&fit=crop",
+    "category": "Premium",
+    "available": true
+  },
+  {
+    "id": 8,
+    "name": "Pizza Trufada",
+    "description": "Muçarela, cogumelos paris, azeite trufado e parmesão.",
+    "price": 52.00,
+    "image": "https://images.unsplash.com/photo-1594007654729-407eedc4be65?w=600&h=400&fit=crop",
+    "category": "Premium",
+    "available": true
+  },
+  {
+    "id": 9,
+    "name": "Pizza da Casa",
+    "description": "Molho secreto, muçarela, bacon crocante, catupiry e jalapeño.",
+    "price": 48.00,
+    "image": "https://images.unsplash.com/photo-1590947132387-155cc02f3212?w=600&h=400&fit=crop",
+    "category": "Premium",
+    "available": true
+  },
+  {
+    "id": 10,
+    "name": "Coca-Cola 2L",
+    "description": "Refrigerante Coca-Cola tradicional 2 litros.",
+    "price": 10.00,
+    "image": "https://images.unsplash.com/photo-1554866585-cd94860890b7?w=600&h=400&fit=crop",
+    "category": "Bebida",
+    "available": true
+  },
+  {
+    "id": 11,
+    "name": "Guaraná Antarctica 2L",
+    "description": "Refrigerante Guaraná Antarctica 2 litros.",
+    "price": 9.00,
+    "image": "https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=600&h=400&fit=crop",
+    "category": "Bebida",
+    "available": true
+  },
+  {
+    "id": 12,
+    "name": "Suco Natural 500ml",
+    "description": "Suco natural de laranja ou limão. 500ml.",
+    "price": 8.00,
+    "image": "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=600&h=400&fit=crop",
+    "category": "Bebida",
+    "available": true
   }
 ]
