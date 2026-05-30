@@ -6,10 +6,12 @@ namespace PizzariaGourmet.Services;
 public class NotificationService
 {
     private readonly IConfiguration _config;
+    private readonly ILogger<NotificationService> _logger;
 
-    public NotificationService(IConfiguration config)
+    public NotificationService(IConfiguration config, ILogger<NotificationService> logger)
     {
         _config = config;
+        _logger = logger;
     }
 
     public async Task SendEmailAsync(string orderId, string payload)
@@ -21,7 +23,10 @@ public class NotificationService
         var toEmail = _config["NOTIFY_EMAIL_TO"];
 
         if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(toEmail))
+        {
+            _logger.LogWarning("SMTP not configured - skipping email notification for order {OrderId}", orderId);
             return;
+        }
 
         var smtpPort = int.TryParse(smtpPortStr, out var p) ? p : 587;
 
@@ -43,9 +48,9 @@ public class NotificationService
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }
-        catch
+        catch (Exception ex)
         {
-            // falha no envio do e-mail não bloqueia o fluxo
+            _logger.LogError(ex, "Failed to send email notification for order {OrderId}", orderId);
         }
     }
 
@@ -58,7 +63,10 @@ public class NotificationService
 
         if (string.IsNullOrEmpty(twilioSid) || string.IsNullOrEmpty(twilioToken) ||
             string.IsNullOrEmpty(twilioFrom) || string.IsNullOrEmpty(notifyPhone))
+        {
+            _logger.LogWarning("Twilio not configured - skipping SMS notification for order {OrderId}", orderId);
             return;
+        }
 
         try
         {
@@ -78,16 +86,25 @@ public class NotificationService
             reqMsg.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
                 "Basic", Convert.ToBase64String(byteArray));
             await httpClient.SendAsync(reqMsg);
+            _logger.LogInformation("SMS notification sent for order {OrderId}", orderId);
         }
-        catch
+        catch (Exception ex)
         {
-            // falha no SMS não bloqueia o fluxo
+            _logger.LogError(ex, "Failed to send SMS notification for order {OrderId}", orderId);
         }
+    }
+
+    public string GetTrackingUrl(string orderId)
+    {
+        var domain = Environment.GetEnvironmentVariable("DOMAIN") ?? "http://localhost:5000";
+        return $"{domain}/Rastreio?PedidoId={orderId}";
     }
 
     public async Task SendNotificationsAsync(string orderId, string payload)
     {
-        await SendEmailAsync(orderId, payload);
+        _logger.LogInformation("Sending notifications for order {OrderId}", orderId);
+        var trackingUrl = GetTrackingUrl(orderId);
+        await SendEmailAsync(orderId, payload + $"\n\nAcompanhe seu pedido: {trackingUrl}");
         await SendSmsAsync(orderId, payload);
     }
 }

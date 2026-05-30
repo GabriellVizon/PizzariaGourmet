@@ -1,0 +1,73 @@
+@page
+@model HistoricoModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="container" style="max-width:640px;margin:32px auto">
+  <h2 style="text-align:center">📋 Meus Pedidos</h2>
+  <p style="text-align:center;color:var(--text-light);margin-bottom:24px">Consulte todos os seus pedidos informando seu telefone.</p>
+
+  <form method="post" class="admin-panel" style="margin-bottom:20px">
+    <div class="form-group">
+      <label for="telefone">Telefone (WhatsApp)</label>
+      <input id="telefone" name="Telefone" value="@Model.Telefone" required placeholder="(24) 99999-9999" />
+    </div>
+    <button type="submit" class="btn-checkout" style="margin-top:12px;width:100%">Buscar Pedidos</button>
+  </form>
+
+  @if (Model.Buscou)
+  {
+    if (Model.Pedidos.Count == 0)
+    {
+      <div class="admin-panel" style="text-align:center;color:var(--text-light)">
+        Nenhum pedido encontrado para este telefone.
+      </div>
+    }
+    else
+    {
+      @foreach (var pedido in Model.Pedidos)
+      {
+        <div class="admin-panel" style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <div>
+              <strong style="font-size:1.1rem">Pedido #@pedido.Id[..8]</strong>
+              <div style="font-size:0.85rem;color:var(--text-light)">@pedido.CreatedAt</div>
+            </div>
+            @{
+              var statusLabel = pedido.Status switch
+              {
+                "pending" => "Pendente",
+                "paid" => "Pago",
+                "preparing" => "Preparando",
+                "delivering" => "Saiu para entrega",
+                "delivered" => "Entregue",
+                "cancelled" => "Cancelado",
+                _ => pedido.Status
+              };
+              var statusColor = pedido.Status switch
+              {
+                "paid" => "#27ae60",
+                "preparing" => "#f39c12",
+                "delivering" => "#3498db",
+                "delivered" => "#27ae60",
+                "cancelled" => "#e74c3c",
+                _ => "var(--accent)"
+              };
+            }
+            <span style="display:inline-block;padding:4px 14px;border-radius:50px;font-size:0.85rem;font-weight:700;background:@statusColor;color:#fff">@statusLabel</span>
+          </div>
+
+          <div style="margin-top:12px;font-size:0.9rem;display:flex;gap:16px;flex-wrap:wrap">
+            <span><strong>Total:</strong> R$ @pedido.Total.ToString("F2")</span>
+            <span><strong>Pagamento:</strong> @pedido.PaymentMethod</span>
+          </div>
+
+          <div style="margin-top:12px">
+            <a href="/Rastreio?PedidoId=@pedido.Id" style="color:var(--brand);font-weight:600;text-decoration:none">📦 Acompanhar Pedido →</a>
+          </div>
+        </div>
+      }
+    }
+  }
+</div>

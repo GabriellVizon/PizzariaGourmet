@@ -8,17 +8,56 @@
   <div class="container">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <h2 style="margin:0">📦 Pedidos</h2>
-      <div style="display:flex;gap:16px;align-items:center">
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">Dashboard</a>
         <a href="/Admin/Products" style="color:var(--brand);font-weight:600;text-decoration:none">Produtos</a>
         <a href="/Admin/Complements" style="color:var(--brand);font-weight:600;text-decoration:none">Complementos</a>
         <a href="/Admin/Settings" style="color:var(--text-light);font-weight:600;text-decoration:none">Config</a>
+        <a href="/Admin/Logout" style="color:#e74c3c;font-weight:600;text-decoration:none;font-size:0.85rem">Sair</a>
       </div>
+    </div>
+
+    <div class="admin-panel" style="margin-bottom:16px">
+      <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end">
+        <div style="flex:1;min-width:140px">
+          <label for="name">Nome</label>
+          <input id="name" name="Name" value="@Model.Name" placeholder="Cliente" />
+        </div>
+        <div style="flex:1;min-width:140px">
+          <label for="phone">Telefone</label>
+          <input id="phone" name="Phone" value="@Model.Phone" placeholder="Telefone" />
+        </div>
+        <div style="min-width:130px">
+          <label for="status">Status</label>
+          <select id="status" name="Status">
+            <option value="">Todos</option>
+            <option value="pending" selected="@(Model.Status == "pending")">Pendente</option>
+            <option value="paid" selected="@(Model.Status == "paid")">Pago</option>
+            <option value="preparing" selected="@(Model.Status == "preparing")">Preparando</option>
+            <option value="delivering" selected="@(Model.Status == "delivering")">Saiu pra entrega</option>
+            <option value="delivered" selected="@(Model.Status == "delivered")">Entregue</option>
+            <option value="cancelled" selected="@(Model.Status == "cancelled")">Cancelado</option>
+          </select>
+        </div>
+        <div style="min-width:130px">
+          <label for="dateFrom">De</label>
+          <input id="dateFrom" name="DateFrom" type="date" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div style="min-width:130px">
+          <label for="dateTo">Até</label>
+          <input id="dateTo" name="DateTo" type="date" value="@Model.DateTo?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div style="display:flex;gap:8px">
+          <button type="submit">Filtrar</button>
+          <a href="/Admin/Orders" style="display:inline-block;padding:8px 16px;border:1px solid var(--border);border-radius:50px;text-decoration:none;color:var(--text);font-weight:600;font-size:0.85rem">Limpar</a>
+        </div>
+      </form>
     </div>
 
     @if (Model.Orders.Count == 0)
     {
       <div class="admin-panel" style="text-align:center;color:var(--text-light)">
-        Nenhum pedido recebido ainda.
+        Nenhum pedido encontrado.
       </div>
     }
     else
@@ -62,6 +101,9 @@
             }
           </tbody>
         </table>
+        <div style="padding:12px;text-align:center;font-size:0.85rem;color:var(--text-light)">
+          Total: @Model.Orders.Count pedido(s)
+        </div>
       </div>
     }
   </div>

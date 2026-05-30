@@ -6,7 +6,10 @@
 
 <div class="admin-page">
   <div class="container">
-    <h2>Pedido @Model.Id?[..8]</h2>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <h2 style="margin:0">Pedido @(Model.Id?.Length > 8 ? Model.Id[..8] : Model.Id)</h2>
+      <button onclick="window.print()" class="btn-print" style="padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:50px;font-weight:600;cursor:pointer">🖨️ Imprimir</button>
+    </div>
 
     <div class="admin-panel">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
@@ -20,6 +23,10 @@
           <p><strong>Criado:</strong> @Model.CreatedAt</p>
           <p><strong>Status:</strong> <span style="color:var(--brand);font-weight:700">@Model.Status</span></p>
           <p><strong>Pagamento:</strong> @Model.PaymentMethod</p>
+          @if (!string.IsNullOrEmpty(Model.CouponCode))
+          {
+            <p><strong>Cupom:</strong> @Model.CouponCode (-R$ @Model.Discount.ToString("F2"))</p>
+          }
         </div>
       </div>
     </div>
@@ -30,22 +37,50 @@
         <thead>
           <tr>
             <th>Produto</th>
+            <th>Tamanho</th>
+            <th>Complementos</th>
             <th>Qtd</th>
-            <th>Preço</th>
+            <th>Preço Unit.</th>
             <th>Subtotal</th>
           </tr>
         </thead>
-        <tbody id="order-items-body">
+        <tbody>
+          @if (Model.Items.Count > 0)
+          {
+            decimal calcSubtotal = 0;
+            @foreach (var item in Model.Items)
+            {
+              var st = item.Price * item.Qty;
+              calcSubtotal += st;
+              <tr>
+                <td>@item.Name</td>
+                <td>@item.Size</td>
+                <td>@item.Complements</td>
+                <td>@item.Qty</td>
+                <td>R$ @item.Price.ToString("F2")</td>
+                <td>R$ @st.ToString("F2")</td>
+              </tr>
+            }
+          }
+          else
+          {
+            <tr><td colspan="6">Itens não disponíveis</td></tr>
+          }
         </tbody>
       </table>
       <div style="margin-top:16px;border-top:2px solid var(--text);padding-top:12px">
-        <p><strong>Subtotal:</strong> R$ <span id="order-subtotal">0,00</span></p>
-        <p><strong>Frete:</strong> R$ <span id="order-delivery">@Model.DeliveryFee.ToString("F2")</span></p>
-        <p style="font-size:1.1rem"><strong>Total:</strong> R$ <span id="order-total">@Model.Total.ToString("F2")</span></p>
+        <p><strong>Subtotal:</strong> R$ @Model.Subtotal.ToString("F2")</p>
+        @if (Model.Discount > 0)
+        {
+          <p><strong>Desconto:</strong> -R$ @Model.Discount.ToString("F2")</p>
+        }
+        <p><strong>Frete:</strong> R$ @Model.DeliveryFee.ToString("F2")</p>
+        <p style="font-size:1.1rem"><strong>Total:</strong> R$ @Model.Total.ToString("F2")</p>
       </div>
     </div>
 
     <form method="post" class="admin-panel">
+      @Html.AntiForgeryToken()
       <h3>Atualizar Status</h3>
       <div style="display:flex;gap:12px;align-items:end">
         <div style="flex:1">
@@ -68,30 +103,3 @@
     </form>
   </div>
 </div>
-
-<script>
-try {
-  const payload = @Html.Raw(Model.Payload);
-  const items = payload?.cart || (Array.isArray(payload) ? payload : []);
-  const tbody = document.getElementById('order-items-body');
-  let subtotal = 0;
-  if (items.length > 0) {
-    tbody.innerHTML = items.map(i => {
-      const st = (i.price || 0) * (i.qty || 1);
-      subtotal += st;
-      return `<tr>
-        <td>${i.name || i.productName || 'Produto'}</td>
-        <td>${i.qty || 1}</td>
-        <td>R$ ${(i.price || 0).toFixed(2)}</td>
-        <td>R$ ${st.toFixed(2)}</td>
-      </tr>`;
-    }).join('');
-  } else {
-    tbody.innerHTML = '<tr><td colspan="4">Itens não disponíveis (formato raw)</td></tr>';
-  }
-  document.getElementById('order-subtotal').textContent = subtotal.toFixed(2);
-  document.getElementById('order-total').textContent = (subtotal + @Model.DeliveryFee).toFixed(2);
-} catch(e) {
-  document.getElementById('order-items-body').innerHTML = '<tr><td colspan="4">Erro ao parsear itens</td></tr>';
-}
-</script>

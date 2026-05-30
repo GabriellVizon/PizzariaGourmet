@@ -34,8 +34,20 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cQ29tcGxlbWVudHMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Admin/Coupons.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cQ291cG9ucy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Admin/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Admin/Login.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cTG9naW4uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Admin/Logout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cTG9nb3V0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Admin/Order.cshtml]
@@ -66,8 +78,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2hlY2tvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXJyb3IuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Historico.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSGlzdG9yaWNvLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Rastreio.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmFzdHJlaW8uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/gabri/OneDrive/Área de Trabalho/PizzariaGourmet/Pages/Shared/_Layout.cshtml]

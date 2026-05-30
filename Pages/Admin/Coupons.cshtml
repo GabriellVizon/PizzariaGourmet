@@ -1,0 +1,74 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@{
+  Layout = "_Layout";
+}
+
+<div class="admin-page">
+  <div class="container">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="margin:0">🎫 Cupons de Desconto</h2>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">Dashboard</a>
+          <a href="/Admin/Orders" style="color:var(--text-light);font-weight:600;text-decoration:none">Pedidos</a>
+          <a href="/Admin/Products" style="color:var(--brand);font-weight:600;text-decoration:none">Produtos</a>
+          <a href="/Admin/Complements" style="color:var(--brand);font-weight:600;text-decoration:none">Complementos</a>
+          <a href="/Admin/Settings" style="color:var(--text-light);font-weight:600;text-decoration:none">Config</a>
+          <a href="/Admin/Logout" style="color:#e74c3c;font-weight:600;text-decoration:none;font-size:0.85rem">Sair</a>
+        </div>
+      </div>
+
+    <div class="admin-panel">
+      <form id="coupon-form">
+        <input type="hidden" name="id" />
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label>Código</label>
+            <input name="code" required placeholder="Ex: PIZZA10" />
+          </div>
+          <div>
+            <label>Tipo</label>
+            <select name="discountType">
+              <option value="percentage">Percentual (%)</option>
+              <option value="fixed">Valor Fixo (R$)</option>
+            </select>
+          </div>
+          <div>
+            <label>Valor</label>
+            <input name="discountValue" type="number" step="0.01" required placeholder="10" />
+          </div>
+          <div>
+            <label>Pedido mínimo (R$)</label>
+            <input name="minOrder" type="number" step="0.01" value="0" />
+          </div>
+          <div>
+            <label>Validade</label>
+            <input name="expiresAt" type="datetime-local" />
+          </div>
+          <div>
+            <label>Usos máximos (0 = ilimitado)</label>
+            <input name="maxUses" type="number" value="0" />
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:12px;align-items:center">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer">
+            <input name="isActive" type="checkbox" checked value="true" style="width:auto" />
+            Ativo
+          </label>
+        </div>
+        <div style="margin-top:12px">
+          <button type="submit">Salvar</button>
+          <button id="reset-coupon-form" type="button">Limpar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="admin-panel">
+      <h3>Cupons Cadastrados</h3>
+      <div id="coupons-list">Carregando...</div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/admin-coupons.js"></script>

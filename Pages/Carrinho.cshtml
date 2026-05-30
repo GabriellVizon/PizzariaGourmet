@@ -128,6 +128,8 @@ document.getElementById('carrinho-continue').addEventListener('click', () => {
     const data = await res.json();
     DELIVERY_FEE = data.deliveryFee;
     FREE_DELIVERY_MIN = data.freeDeliveryMin;
+    if (data.whatsapp) WHATSAPP = data.whatsapp;
+    if (data.pixKey) PIX_KEY = data.pixKey;
   } catch (e) {
     console.error('Erro ao carregar configurações:', e);
   }

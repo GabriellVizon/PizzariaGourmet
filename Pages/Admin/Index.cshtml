@@ -1,0 +1,98 @@
+@page
+@model AdminDashboardModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="admin-page">
+  <div class="container">
+    <h2 style="margin-bottom:20px">Painel Administrativo</h2>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px">
+      <div class="admin-panel" style="text-align:center">
+        <div style="font-size:2rem;font-weight:800;color:var(--brand)">@Model.PendingOrders</div>
+        <div style="font-size:0.85rem;color:var(--text-light)">Pedidos Pendentes</div>
+      </div>
+      <div class="admin-panel" style="text-align:center">
+        <div style="font-size:2rem;font-weight:800;color:#27ae60">@Model.OrdersToday</div>
+        <div style="font-size:0.85rem;color:var(--text-light)">Pedidos Hoje</div>
+      </div>
+      <div class="admin-panel" style="text-align:center">
+        <div style="font-size:2rem;font-weight:800;color:var(--accent)">R$ @Model.RevenueToday.ToString("F2")</div>
+        <div style="font-size:0.85rem;color:var(--text-light)">Faturamento Hoje</div>
+      </div>
+      <div class="admin-panel" style="text-align:center">
+        <div style="font-size:2rem;font-weight:800;color:var(--text)">R$ @Model.TotalRevenue.ToString("F2")</div>
+        <div style="font-size:0.85rem;color:var(--text-light)">Faturamento Total</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+      <a href="/Admin/Orders" class="admin-panel" style="display:block;text-align:center;text-decoration:none;cursor:pointer;transition:var(--transition)">
+        <div style="font-size:2rem;margin-bottom:4px">📦</div>
+        <div style="font-weight:700;color:var(--text)">Pedidos</div>
+        <div style="font-size:0.8rem;color:var(--text-light)">Gerenciar pedidos</div>
+      </a>
+      <a href="/Admin/Products" class="admin-panel" style="display:block;text-align:center;text-decoration:none;cursor:pointer;transition:var(--transition)">
+        <div style="font-size:2rem;margin-bottom:4px">🍕</div>
+        <div style="font-weight:700;color:var(--text)">Produtos</div>
+        <div style="font-size:0.8rem;color:var(--text-light)">Gerenciar cardápio</div>
+      </a>
+      <a href="/Admin/Complements" class="admin-panel" style="display:block;text-align:center;text-decoration:none;cursor:pointer;transition:var(--transition)">
+        <div style="font-size:2rem;margin-bottom:4px">🧀</div>
+        <div style="font-weight:700;color:var(--text)">Complementos</div>
+        <div style="font-size:0.8rem;color:var(--text-light)">Gerenciar complementos</div>
+      </a>
+      <a href="/Admin/Coupons" class="admin-panel" style="display:block;text-align:center;text-decoration:none;cursor:pointer;transition:var(--transition)">
+        <div style="font-size:2rem;margin-bottom:4px">🎫</div>
+        <div style="font-weight:700;color:var(--text)">Cupons</div>
+        <div style="font-size:0.8rem;color:var(--text-light)">Gerenciar descontos</div>
+      </a>
+      <a href="/Admin/Settings" class="admin-panel" style="display:block;text-align:center;text-decoration:none;cursor:pointer;transition:var(--transition)">
+        <div style="font-size:2rem;margin-bottom:4px">⚙️</div>
+        <div style="font-weight:700;color:var(--text)">Configurações</div>
+        <div style="font-size:0.8rem;color:var(--text-light)">Taxas e dados</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+let lastCheck = '@DateTime.UtcNow.ToString("o")';
+
+function playNewOrderSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    osc.frequency.setValueAtTime(1000, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  } catch (e) {
+    console.log('Som indisponível');
+  }
+}
+
+async function checkNewOrders() {
+  try {
+    const res = await fetch('/api/orders/new-count?since=' + encodeURIComponent(lastCheck));
+    const data = await res.json();
+    if (data.count > 0) {
+      playNewOrderSound();
+      document.title = '\u{1F514} Novo Pedido! - Pizzaria Gourmet';
+      setTimeout(() => document.title = 'Painel Admin - Pizzaria Gourmet', 5000);
+    }
+    if (data.timestamp) lastCheck = data.timestamp;
+  } catch (e) {
+    console.error('Erro ao verificar novos pedidos:', e);
+  }
+}
+
+setInterval(checkNewOrders, 30000);
+checkNewOrders();
+</script>

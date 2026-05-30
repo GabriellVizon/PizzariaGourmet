@@ -1,8 +1,12 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Stripe;
 using Stripe.Checkout;
+using PizzariaGourmet.Data;
+using PizzariaGourmet.Models;
+using PizzariaGourmet.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +20,8 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.SignIn.RequireConfirmedAccount = false;
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 6;
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 })
 .AddEntityFrameworkStores<PizzariaGourmet.Data.AppDbContext>()
 .AddDefaultTokenProviders();
@@ -23,12 +29,21 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Admin/Login";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+});
+
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
 });
 
 builder.Services.AddScoped<PizzariaGourmet.Services.ProductService>();
 builder.Services.AddScoped<PizzariaGourmet.Services.OrderService>();
 builder.Services.AddScoped<PizzariaGourmet.Services.NotificationService>();
 builder.Services.AddScoped<PizzariaGourmet.Services.ComplementService>();
+builder.Services.AddScoped<PizzariaGourmet.Services.CouponService>();
+builder.Services.AddScoped<PizzariaGourmet.Services.WhatsAppService>();
 
 builder.Services.AddRazorPages();
 
@@ -38,6 +53,11 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PizzariaGourmet.Data.AppDbContext>();
     await db.Database.EnsureCreatedAsync();
+
+    // Migration: add missing columns for existing databases
+    try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN Discount TEXT DEFAULT 0"); } catch { }
+    try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN CouponCode TEXT"); } catch { }
+    try { await db.Database.ExecuteSqlRawAsync("CREATE TABLE IF NOT EXISTS Coupons (Id INTEGER PRIMARY KEY, Code TEXT NOT NULL UNIQUE, DiscountType TEXT NOT NULL DEFAULT 'percentage', DiscountValue TEXT NOT NULL DEFAULT 0, MinOrder TEXT NOT NULL DEFAULT 0, ExpiresAt TEXT, MaxUses INTEGER NOT NULL DEFAULT 0, UsedCount INTEGER NOT NULL DEFAULT 0, IsActive INTEGER NOT NULL DEFAULT 1)"); } catch { }
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
     var adminEmail = app.Configuration["Admin:Email"] ?? "admin@pizzariagourmet.com";
@@ -80,7 +100,28 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-if (app.Environment.IsDevelopment())
+// Security headers
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+
+    if (!context.Request.Host.Host.Contains("localhost"))
+    {
+        context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+
+    await next();
+});
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
+else
 {
     app.UseDeveloperExceptionPage();
 }
@@ -98,18 +139,42 @@ var settingsPath = System.IO.Path.Combine(builder.Environment.ContentRootPath, "
 app.MapGet("/api/settings", () =>
 {
     if (!System.IO.File.Exists(settingsPath))
-        return Results.Json(new { deliveryFee = 5.00, freeDeliveryMin = 50.00 });
+        return Results.Json(new
+        {
+            deliveryFee = 5.00,
+            freeDeliveryMin = 50.00,
+            whatsapp = "5524992206707",
+            pixKey = "contato@pizzariagourmet.com",
+            storeName = "Pizzaria Gourmet"
+        });
     var json = System.IO.File.ReadAllText(settingsPath);
     return Results.Content(json, "application/json");
 });
 
-app.MapPost("/api/settings", async (HttpRequest req) =>
+app.MapPut("/api/settings", async (HttpRequest req, ILogger<Program> logger) =>
 {
     using var sr = new StreamReader(req.Body);
     var body = await sr.ReadToEndAsync();
+
+    // Validate JSON
+    try
+    {
+        var doc = JsonDocument.Parse(body);
+        if (!doc.RootElement.TryGetProperty("deliveryFee", out var _) &&
+            !doc.RootElement.TryGetProperty("freeDeliveryMin", out var _))
+        {
+            return Results.BadRequest(new { error = "Invalid settings JSON" });
+        }
+    }
+    catch
+    {
+        return Results.BadRequest(new { error = "Invalid JSON" });
+    }
+
     await System.IO.File.WriteAllTextAsync(settingsPath, body);
+    logger.LogInformation("Settings updated");
     return Results.Ok();
-});
+}).RequireAuthorization();
 
 app.MapGet("/api/products", async (PizzariaGourmet.Services.ProductService svc) =>
     Results.Json(await svc.GetAllAsync()));
@@ -126,7 +191,7 @@ app.MapPost("/api/products", async (HttpRequest req, PizzariaGourmet.Services.Pr
     if (product == null) return Results.BadRequest();
     var created = await svc.CreateAsync(product);
     return Results.Created($"/api/products/{created.Id}", created);
-});
+}).RequireAuthorization();
 
 app.MapPut("/api/products/{id:int}", async (int id, HttpRequest req, PizzariaGourmet.Services.ProductService svc) =>
 {
@@ -134,13 +199,13 @@ app.MapPut("/api/products/{id:int}", async (int id, HttpRequest req, PizzariaGou
     if (product == null) return Results.BadRequest();
     var updated = await svc.UpdateAsync(id, product);
     return updated is null ? Results.NotFound() : Results.Json(updated);
-});
+}).RequireAuthorization();
 
 app.MapDelete("/api/products/{id:int}", async (int id, PizzariaGourmet.Services.ProductService svc) =>
 {
     var ok = await svc.DeleteAsync(id);
     return ok ? Results.Ok() : Results.NotFound();
-});
+}).RequireAuthorization();
 
 // Complement endpoints
 app.MapGet("/api/complements", async (PizzariaGourmet.Services.ComplementService svc) =>
@@ -157,27 +222,27 @@ app.MapGet("/api/complements/{id:int}", async (int id, PizzariaGourmet.Services.
 
 app.MapPost("/api/complements", async (HttpRequest req, PizzariaGourmet.Services.ComplementService svc) =>
 {
-    var complement = await JsonSerializer.DeserializeAsync<PizzariaGourmet.Models.Complement>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var complement = await JsonSerializer.DeserializeAsync<Complement>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     if (complement == null) return Results.BadRequest();
     var created = await svc.CreateAsync(complement);
     return Results.Created($"/api/complements/{created.Id}", created);
-});
+}).RequireAuthorization();
 
 app.MapPut("/api/complements/{id:int}", async (int id, HttpRequest req, PizzariaGourmet.Services.ComplementService svc) =>
 {
-    var complement = await JsonSerializer.DeserializeAsync<PizzariaGourmet.Models.Complement>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var complement = await JsonSerializer.DeserializeAsync<Complement>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     if (complement == null) return Results.BadRequest();
     var updated = await svc.UpdateAsync(id, complement);
     return updated is null ? Results.NotFound() : Results.Json(updated);
-});
+}).RequireAuthorization();
 
 app.MapDelete("/api/complements/{id:int}", async (int id, PizzariaGourmet.Services.ComplementService svc) =>
 {
     var ok = await svc.DeleteAsync(id);
     return ok ? Results.Ok() : Results.NotFound();
-});
+}).RequireAuthorization();
 
-app.MapPost("/create-checkout-session", async (HttpRequest req, PizzariaGourmet.Services.OrderService orderSvc) =>
+app.MapPost("/create-checkout-session", async (HttpRequest req, OrderService orderSvc, NotificationService notifySvc, PizzariaGourmet.Services.CouponService couponSvc, WhatsAppService whatsAppSvc, ILogger<Program> logger) =>
 {
     var stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_KEY");
     var domain = Environment.GetEnvironmentVariable("DOMAIN") ?? "http://localhost:5000";
@@ -191,6 +256,7 @@ app.MapPost("/create-checkout-session", async (HttpRequest req, PizzariaGourmet.
 
     var customer = doc.RootElement.TryGetProperty("customer", out var c) ? c : default;
     var paymentMethod = doc.RootElement.TryGetProperty("paymentMethod", out var pm) ? pm.GetString() ?? "card" : "card";
+    var couponCode = doc.RootElement.TryGetProperty("couponCode", out var cc) ? cc.GetString() : null;
 
     decimal subtotal = 0;
     decimal baseSubtotal = 0;
@@ -209,9 +275,39 @@ app.MapPost("/create-checkout-session", async (HttpRequest req, PizzariaGourmet.
         subtotal += itemTotal;
     }
 
-    var deliveryFee = baseSubtotal >= 50 ? 0 : 5.00m;
+    // Read delivery settings from settings.json
+    var deliveryFee = 5.00m;
+    var freeDeliveryMin = 50.00m;
+    if (System.IO.File.Exists(settingsPath))
+    {
+        try
+        {
+            var settingsDoc = JsonDocument.Parse(System.IO.File.ReadAllText(settingsPath));
+            if (settingsDoc.RootElement.TryGetProperty("deliveryFee", out var df))
+                deliveryFee = df.GetDecimal();
+            if (settingsDoc.RootElement.TryGetProperty("freeDeliveryMin", out var fdm))
+                freeDeliveryMin = fdm.GetDecimal();
+        }
+        catch { }
+    }
+    var finalDeliveryFee = baseSubtotal >= freeDeliveryMin ? 0 : deliveryFee;
+    var discount = 0m;
 
-    var order = new PizzariaGourmet.Models.Order
+    // Validate and apply coupon
+    if (!string.IsNullOrEmpty(couponCode))
+    {
+        var coupon = await couponSvc.ValidateAsync(couponCode, subtotal);
+        if (coupon != null)
+        {
+            discount = couponSvc.ApplyDiscount(coupon, subtotal);
+            await couponSvc.IncrementUsedAsync(couponCode);
+            logger.LogInformation("Coupon {Code} applied - discount {Discount}", couponCode, discount);
+        }
+    }
+
+    var total = Math.Max(0, subtotal + finalDeliveryFee - discount);
+
+    var order = new Order
     {
         CustomerName = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "",
         CustomerPhone = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("phone", out var ph) ? ph.GetString() ?? "" : "",
@@ -223,15 +319,27 @@ app.MapPost("/create-checkout-session", async (HttpRequest req, PizzariaGourmet.
         Status = "pending",
         PaymentMethod = paymentMethod == "stripe" ? "stripe" : paymentMethod,
         Subtotal = subtotal,
-        DeliveryFee = deliveryFee,
-        Total = subtotal + deliveryFee
+        DeliveryFee = finalDeliveryFee,
+        Discount = discount,
+        CouponCode = couponCode,
+        Total = total
     };
 
     await orderSvc.CreateAsync(order);
 
+    // Send notification for all orders
+    _ = notifySvc.SendNotificationsAsync(order.Id, body);
+
+    // Send WhatsApp to customer
+    if (!string.IsNullOrEmpty(order.CustomerPhone))
+    {
+        _ = whatsAppSvc.SendStatusUpdateAsync(order.CustomerPhone, order.CustomerName, order.Id, order.Status, domain);
+    }
+
     // For Pix or Cash, send the order directly without Stripe
     if (paymentMethod != "card")
     {
+        logger.LogInformation("Order {OrderId} created with payment method {Method}", order.Id, paymentMethod);
         return Results.Json(new { url = domain + "/Success?order_id=" + order.Id, id = order.Id, orderId = order.Id });
     }
 
@@ -289,7 +397,7 @@ app.MapPost("/create-checkout-session", async (HttpRequest req, PizzariaGourmet.
     return Results.Json(new { url = session.Url, id = session.Id, orderId = order.Id });
 });
 
-app.MapGet("/session/{id}", async (string id) =>
+app.MapGet("/session/{id}", async (string id, ILogger<Program> logger) =>
 {
     var stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_KEY");
     if (string.IsNullOrEmpty(stripeKey))
@@ -302,11 +410,105 @@ app.MapGet("/session/{id}", async (string id) =>
     }
     catch (Exception ex)
     {
-        return Results.BadRequest(new { error = ex.Message });
+        logger.LogError(ex, "Failed to retrieve Stripe session {SessionId}", id);
+        return Results.BadRequest(new { error = "Failed to retrieve session" });
     }
 });
 
-app.MapPost("/webhook", async (HttpRequest req, PizzariaGourmet.Services.OrderService orderSvc, PizzariaGourmet.Services.NotificationService notifySvc) =>
+// Image upload endpoint
+var uploadsDir = System.IO.Path.Combine(builder.Environment.WebRootPath, "uploads");
+System.IO.Directory.CreateDirectory(uploadsDir);
+
+app.MapPost("/api/upload", async (HttpRequest req) =>
+{
+    if (!req.HasFormContentType)
+        return Results.BadRequest(new { error = "Expected form data" });
+
+    var form = await req.ReadFormAsync();
+    var file = form.Files.GetFile("file");
+    if (file == null || file.Length == 0)
+        return Results.BadRequest(new { error = "No file provided" });
+
+    var ext = System.IO.Path.GetExtension(file.FileName).ToLowerInvariant();
+    var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+    if (!allowed.Contains(ext))
+        return Results.BadRequest(new { error = "Invalid file type. Allowed: jpg, jpeg, png, gif, webp" });
+
+    var fileName = $"{Guid.NewGuid()}{ext}";
+    var filePath = System.IO.Path.Combine(uploadsDir, fileName);
+
+    using (var stream = new FileStream(filePath, FileMode.Create))
+    {
+        await file.CopyToAsync(stream);
+    }
+
+    var url = $"/uploads/{fileName}";
+    return Results.Json(new { url });
+}).RequireAuthorization();
+
+// New orders count for sound notification
+app.MapGet("/api/orders/new-count", async (OrderService orderSvc, HttpRequest req) =>
+{
+    var sinceStr = req.Query["since"];
+    if (string.IsNullOrEmpty(sinceStr) || !DateTime.TryParse(sinceStr, out var since))
+        since = DateTime.UtcNow.AddHours(-1);
+
+    var count = await orderSvc.GetNewOrderCountAsync(since);
+    return Results.Json(new { count, timestamp = DateTime.UtcNow.ToString("o") });
+});
+
+// Coupon validation
+app.MapGet("/api/coupons/validate", async (string code, decimal? subtotal, PizzariaGourmet.Services.CouponService couponSvc) =>
+{
+    var coupon = await couponSvc.ValidateAsync(code, subtotal ?? 0);
+    if (coupon == null)
+        return Results.Json(new { valid = false, error = "Cupom inválido ou expirado." });
+
+    var discount = couponSvc.ApplyDiscount(coupon, subtotal ?? 0);
+    return Results.Json(new
+    {
+        valid = true,
+        code = coupon.Code,
+        discountType = coupon.DiscountType,
+        discountValue = coupon.DiscountValue,
+        discount,
+        minOrder = coupon.MinOrder
+    });
+});
+
+// Coupon CRUD
+app.MapGet("/api/coupons", async (PizzariaGourmet.Services.CouponService svc) =>
+    Results.Json(await svc.GetAllAsync()));
+
+app.MapGet("/api/coupons/{id:int}", async (int id, PizzariaGourmet.Services.CouponService svc) =>
+{
+    var c = await svc.GetByIdAsync(id);
+    return c is null ? Results.NotFound() : Results.Json(c);
+});
+
+app.MapPost("/api/coupons", async (HttpRequest req, PizzariaGourmet.Services.CouponService svc) =>
+{
+    var coupon = await JsonSerializer.DeserializeAsync<PizzariaGourmet.Models.Coupon>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (coupon == null) return Results.BadRequest();
+    var created = await svc.CreateAsync(coupon);
+    return Results.Created($"/api/coupons/{created.Id}", created);
+}).RequireAuthorization();
+
+app.MapPut("/api/coupons/{id:int}", async (int id, HttpRequest req, PizzariaGourmet.Services.CouponService svc) =>
+{
+    var coupon = await JsonSerializer.DeserializeAsync<PizzariaGourmet.Models.Coupon>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (coupon == null) return Results.BadRequest();
+    var updated = await svc.UpdateAsync(id, coupon);
+    return updated is null ? Results.NotFound() : Results.Json(updated);
+}).RequireAuthorization();
+
+app.MapDelete("/api/coupons/{id:int}", async (int id, PizzariaGourmet.Services.CouponService svc) =>
+{
+    var ok = await svc.DeleteAsync(id);
+    return ok ? Results.Ok() : Results.NotFound();
+}).RequireAuthorization();
+
+app.MapPost("/webhook", async (HttpRequest req, OrderService orderSvc, NotificationService notifySvc, ILogger<Program> logger) =>
 {
     var json = await new StreamReader(req.Body).ReadToEndAsync();
     var sigHeader = req.Headers["Stripe-Signature"].FirstOrDefault();
@@ -318,7 +520,7 @@ app.MapPost("/webhook", async (HttpRequest req, PizzariaGourmet.Services.OrderSe
     try
     {
         var stripeEvent = EventUtility.ConstructEvent(json, sigHeader, webhookSecret);
-        if (stripeEvent.Type == Events.CheckoutSessionCompleted)
+        if (stripeEvent.Type == "checkout.session.completed")
         {
             var session = stripeEvent.Data.Object as Session;
             var orderId = session?.ClientReferenceId;
@@ -332,8 +534,9 @@ app.MapPost("/webhook", async (HttpRequest req, PizzariaGourmet.Services.OrderSe
         }
         return Results.Ok();
     }
-    catch
+    catch (Exception ex)
     {
+        logger.LogError(ex, "Stripe webhook processing failed");
         return Results.BadRequest();
     }
 });

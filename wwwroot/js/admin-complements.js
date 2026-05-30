@@ -45,7 +45,8 @@ async function loadAdminComplements() {
     document.querySelectorAll('.btn-del').forEach(b => b.addEventListener('click', async (e) => {
       if (!confirm('Excluir complemento?')) return;
       const id = Number(e.currentTarget.dataset.id);
-      await fetch('/api/complements/' + id, { method: 'DELETE' });
+      const r = await fetch('/api/complements/' + id, { method: 'DELETE' });
+      if (r.status === 401) { window.location.href = '/Admin/Login'; return; }
       loadAdminComplements();
     }));
   } catch (e) { el.innerText = 'Erro ao carregar complementos'; }
@@ -61,21 +62,27 @@ document.getElementById('complement-form').addEventListener('submit', async (e) 
     available: f.elements['available'].checked
   };
 
-  if (id) {
-    await fetch('/api/complements/' + id, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-  } else {
-    await fetch('/api/complements', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+  const req = (url, opts) => fetch(url, opts).then(r => { if (r.status === 401) { window.location.href = '/Admin/Login'; throw new Error('Não autenticado'); } return r; });
+
+  try {
+    if (id) {
+      await req('/api/complements/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    } else {
+      await req('/api/complements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    }
+    f.reset();
+    loadAdminComplements();
+  } catch (e) {
+    alert('Erro ao salvar complemento');
   }
-  f.reset();
-  loadAdminComplements();
 });
 
 document.getElementById('reset-complement-form')?.addEventListener('click', () => {

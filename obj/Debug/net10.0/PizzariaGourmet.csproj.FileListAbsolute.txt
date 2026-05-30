@@ -197,12 +197,7 @@ C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Micr
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Relational.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Sqlite.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Microsoft.Extensions.DependencyModel.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Microsoft.IdentityModel.Abstractions.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Microsoft.IdentityModel.JsonWebTokens.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Microsoft.IdentityModel.Logging.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Microsoft.VisualStudio.SolutionPersistence.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Microsoft.Win32.SystemEvents.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\MimeKit.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Mono.TextTemplating.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Newtonsoft.Json.dll
@@ -217,12 +212,7 @@ C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Syst
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\System.Composition.Runtime.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\System.Composition.TypedParts.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\System.Configuration.ConfigurationManager.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\System.Drawing.Common.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\System.IdentityModel.Tokens.Jwt.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\System.Security.Cryptography.ProtectedData.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\System.Security.Permissions.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\System.Windows.Extensions.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Twilio.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\cs\Microsoft.CodeAnalysis.resources.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\de\Microsoft.CodeAnalysis.resources.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\es\Microsoft.CodeAnalysis.resources.dll
@@ -288,7 +278,6 @@ C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\ru\M
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\runtimes\browser-wasm\nativeassets\net9.0\e_sqlite3.a
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\runtimes\linux-arm\native\libe_sqlite3.so
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\runtimes\linux-arm64\native\libe_sqlite3.so
@@ -312,10 +301,6 @@ C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\runt
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\runtimes\win-arm64\native\e_sqlite3.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\runtimes\win-x64\native\e_sqlite3.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\runtimes\win-x86\native\e_sqlite3.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\runtimes\unix\lib\net6.0\System.Drawing.Common.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\PizzariaGourmet.csproj.AssemblyReference.cache
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\rpswa.dswa.cache.json
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\PizzariaGourmet.GeneratedMSBuildEditorConfig.editorconfig
@@ -330,7 +315,6 @@ C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\rjim
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\rjsmrazor.dswa.cache.json
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\scopedcss\bundle\PizzariaGourmet.styles.css
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\w2zseeydc0-{0}-vl351w0ch4-vl351w0ch4.gz
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\staticwebassets.build.json
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\staticwebassets.build.json.cache
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\staticwebassets.development.json
@@ -342,7 +326,9 @@ C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\refi
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\PizzariaGourmet.pdb
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\PizzariaGourmet.genruntimeconfig.cache
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\ref\PizzariaGourmet.dll
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\er9aij8d73-{0}-8daezdbqyj-8daezdbqyj.gz
 C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\bin\Debug\net10.0\Data\settings.json
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\auo8ion5ip-{0}-zut3compl0-zut3compl0.gz
-C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\g2gl2hvfbz-{0}-m2vmixpl58-m2vmixpl58.gz
+C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\er9aij8d73-{0}-ifohab7dve-ifohab7dve.gz
+C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\auo8ion5ip-{0}-3vp0xktn9o-3vp0xktn9o.gz
+C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\w2zseeydc0-{0}-dbgyxhhxw8-dbgyxhhxw8.gz
+C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\xthk0bua8u-{0}-yc9d0zj45e-yc9d0zj45e.gz
+C:\Users\gabri\OneDrive\Área de Trabalho\PizzariaGourmet\obj\Debug\net10.0\compressed\g2gl2hvfbz-{0}-yk9r9as7xp-yk9r9as7xp.gz

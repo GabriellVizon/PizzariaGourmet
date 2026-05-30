@@ -12,8 +12,9 @@
     <p style="margin:0 0 8px;font-weight:600">📞 Precisa de ajuda?</p>
     <a href="https://wa.me/5524992206707" style="color:var(--brand);font-weight:700;text-decoration:none">Fale conosco no WhatsApp</a>
   </div>
-  <div style="margin-top:24px">
+  <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
     <a href="/" class="btn-home">← Voltar ao Cardápio</a>
+    <a href="/Rastreio" class="btn-home" style="background:var(--accent);border-color:var(--accent)">📦 Rastrear Pedido</a>
   </div>
 </div>
 
@@ -29,30 +30,36 @@ if (sessionId) {
       const json = await res.json();
       if (json.error) {
         document.getElementById('success-message').innerHTML = `
-          Pagamento confirmado!<br>
+          Pagamento confirmado via cartão de crédito!<br>
           Em breve você receberá a confirmação por WhatsApp.
         `;
       } else {
         document.getElementById('success-message').innerHTML = `
-          Pagamento confirmado via cartão.<br>
+          Pagamento confirmado via cartão de crédito!<br>
           ID da transação: <strong>${json.id.slice(0, 8)}...</strong><br>
           Em breve você receberá a confirmação por WhatsApp.
         `;
       }
       localStorage.removeItem('cart');
     } catch (e) {
-      document.getElementById('success-message').innerText = 'Pagamento confirmado! Em breve você receberá a confirmação.';
+      document.getElementById('success-message').innerHTML = `
+        Pagamento confirmado!<br>
+        Em breve você receberá a confirmação por WhatsApp.
+      `;
     }
   })();
 } else if (orderId) {
   document.getElementById('success-message').innerHTML = `
     Pedido registrado com sucesso!<br>
     Nº do pedido: <strong>#${orderId.slice(0, 8)}</strong><br>
-    Pagamento será confirmado na entrega.
+    Aguarde o contato da pizzaria para confirmar o pagamento e a entrega.
   `;
   localStorage.removeItem('cart');
 } else {
-  document.getElementById('success-message').innerText = 'Pedido registrado!';
+  document.getElementById('success-message').innerHTML = `
+    Pedido registrado com sucesso!<br>
+    Em breve você receberá a confirmação.
+  `;
   localStorage.removeItem('cart');
 }
 </script>

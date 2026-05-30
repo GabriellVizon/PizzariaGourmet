@@ -1,6 +1,9 @@
 let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 let DELIVERY_FEE = 5.00;
 let FREE_DELIVERY_MIN = 50.00;
+let WHATSAPP = '5524992206707';
+let PIX_KEY = 'contato@pizzariagourmet.com';
+let STORE_NAME = 'Pizzaria Gourmet';
 const MAX_COMPLEMENTS = 3;
 
 const productsEl = document.getElementById('products');
@@ -157,6 +160,9 @@ function removeFromCart(idx) {
 function saveCart() {
   localStorage.setItem('cart', JSON.stringify(cart));
 }
+
+// Size modal
+let sizeModalProduct = null;
 
 // Complement modal
 let complementModalProduct = null;
@@ -418,7 +424,8 @@ function renderProducts(products) {
     return `
       <div class="product">
         <div class="product-img-wrap">
-          <img src="${p.image}" alt="${p.name}" loading="lazy" />
+          <img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.onerror=null;this.parentElement.classList.add('img-fallback');this.style.display='none'" />
+          <div class="product-img-placeholder">🍕</div>
           ${badge}
         </div>
         <div class="product-body">
@@ -452,11 +459,22 @@ async function loadSettings() {
     const data = await res.json();
     DELIVERY_FEE = data.deliveryFee;
     FREE_DELIVERY_MIN = data.freeDeliveryMin;
+    WHATSAPP = data.whatsapp || WHATSAPP;
+    PIX_KEY = data.pixKey || PIX_KEY;
+    STORE_NAME = data.storeName || STORE_NAME;
+    updateWhatsAppLinks();
     return data;
   } catch (e) {
     console.error('Erro ao carregar configurações:', e);
     return null;
   }
+}
+
+function updateWhatsAppLinks() {
+  const msg = encodeURIComponent('Oi! Gostaria de fazer um pedido');
+  document.querySelectorAll('a[href*="wa.me"]').forEach(el => {
+    el.href = `https://wa.me/${WHATSAPP}?text=${msg}`;
+  });
 }
 
 async function loadComplements() {

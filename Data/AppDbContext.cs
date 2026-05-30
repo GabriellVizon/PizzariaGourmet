@@ -11,8 +11,8 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
-    public DbSet<Client> Clients => Set<Client>();
     public DbSet<Complement> Complements => Set<Complement>();
+    public DbSet<Coupon> Coupons => Set<Coupon>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -31,14 +31,8 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Subtotal).HasColumnType("decimal(10,2)");
             entity.Property(e => e.DeliveryFee).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.Discount).HasColumnType("decimal(10,2)");
             entity.Property(e => e.Total).HasColumnType("decimal(10,2)");
-        });
-
-        builder.Entity<Client>(entity =>
-        {
-            entity.ToTable("Clients");
-            entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.Phone).IsUnique();
         });
 
         builder.Entity<Complement>(entity =>
@@ -46,6 +40,15 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
             entity.ToTable("Complements");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Price).HasColumnType("decimal(10,2)");
+        });
+
+        builder.Entity<Coupon>(entity =>
+        {
+            entity.ToTable("Coupons");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.Property(e => e.DiscountValue).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.MinOrder).HasColumnType("decimal(10,2)");
         });
     }
 }

@@ -9,7 +9,11 @@
   <div class="container" style="max-width:500px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <h2 style="margin:0">⚙️ Configurações</h2>
-      <a href="/Admin/Orders" style="color:var(--text-light);font-weight:600;text-decoration:none">← Pedidos</a>
+      <div style="display:flex;gap:12px">
+        <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">Dashboard</a>
+        <a href="/Admin/Orders" style="color:var(--text-light);font-weight:600;text-decoration:none">Pedidos</a>
+        <a href="/Admin/Logout" style="color:#e74c3c;font-weight:600;text-decoration:none;font-size:0.85rem">Sair</a>
+      </div>
     </div>
 
     <div class="admin-panel">
@@ -22,6 +26,19 @@
           <label for="freeDeliveryMin">Frete grátis a partir de — R$</label>
           <input id="freeDeliveryMin" name="freeDeliveryMin" type="number" step="0.01" min="0" required />
           <small style="color:var(--text-light)">Se o valor for 0, o frete nunca será grátis.</small>
+        </div>
+        <div class="form-group">
+          <label for="whatsapp">WhatsApp da loja</label>
+          <input id="whatsapp" name="whatsapp" placeholder="5524992206707" />
+          <small style="color:var(--text-light)">DDD + número, apenas dígitos</small>
+        </div>
+        <div class="form-group">
+          <label for="pixKey">Chave PIX</label>
+          <input id="pixKey" name="pixKey" placeholder="chave@email.com" />
+        </div>
+        <div class="form-group">
+          <label for="storeName">Nome da loja</label>
+          <input id="storeName" name="storeName" placeholder="Pizzaria Gourmet" />
         </div>
         <div style="margin-top:16px">
           <button type="submit">Salvar</button>
@@ -39,6 +56,9 @@ async function loadSettings() {
     const s = await r.json();
     document.getElementById('deliveryFee').value = s.deliveryFee;
     document.getElementById('freeDeliveryMin').value = s.freeDeliveryMin;
+    document.getElementById('whatsapp').value = s.whatsapp || '';
+    document.getElementById('pixKey').value = s.pixKey || '';
+    document.getElementById('storeName').value = s.storeName || '';
   } catch {}
 }
 
@@ -48,14 +68,18 @@ document.getElementById('settings-form').addEventListener('submit', async (e) =>
   btn.disabled = true;
   const result = document.getElementById('settings-result');
   try {
-    await fetch('/api/settings', {
-      method: 'POST',
+    const r = await fetch('/api/settings', {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         deliveryFee: Number(document.getElementById('deliveryFee').value),
-        freeDeliveryMin: Number(document.getElementById('freeDeliveryMin').value)
+        freeDeliveryMin: Number(document.getElementById('freeDeliveryMin').value),
+        whatsapp: document.getElementById('whatsapp').value,
+        pixKey: document.getElementById('pixKey').value,
+        storeName: document.getElementById('storeName').value
       })
     });
+    if (r.status === 401) { window.location.href = '/Admin/Login'; return; }
     result.textContent = '✓ Salvo!';
     result.style.color = '#27ae60';
   } catch {

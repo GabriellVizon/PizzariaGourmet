@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using PizzariaGourmet.Services;
 
@@ -16,9 +17,24 @@ public class OrdersModel : PageModel
 
     public List<OrderDto> Orders { get; set; } = new();
 
+    [BindProperty(SupportsGet = true)]
+    public string? Name { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? Phone { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? Status { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public DateTime? DateFrom { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public DateTime? DateTo { get; set; }
+
     public async Task OnGetAsync()
     {
-        var orders = await _orderSvc.GetAllAsync();
+        var orders = await _orderSvc.SearchAsync(Name, Phone, Status, DateFrom, DateTo);
         Orders = orders.Select(o => new OrderDto(o.Id, o.CreatedAt, o.Status, o.CustomerName, o.Total, o.PaymentMethod)).ToList();
     }
 }

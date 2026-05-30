@@ -43,6 +43,7 @@ public class ProductService
         product.Image = updated.Image;
         product.Category = updated.Category;
         product.Available = updated.Available;
+        product.SizesJson = updated.SizesJson;
 
         await _db.SaveChangesAsync();
         return product;

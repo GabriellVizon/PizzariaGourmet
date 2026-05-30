@@ -98,6 +98,7 @@ async function loadAdminProducts() {
       form.elements['price'].value = p.price;
       form.elements['image'].value = p.image;
       if (form.elements['category']) form.elements['category'].value = p.category || '';
+      if (form.elements['available']) form.elements['available'].checked = p.available !== false;
       const sizes = p.sizesJson ? JSON.parse(p.sizesJson) : [];
       renderSizeEditor(sizes);
     }));
@@ -105,11 +106,36 @@ async function loadAdminProducts() {
     document.querySelectorAll('.btn-del').forEach(b => b.addEventListener('click', async (e) => {
       if (!confirm('Excluir produto?')) return;
       const id = Number(e.currentTarget.dataset.id);
-      await fetch('/api/products/' + id, { method: 'DELETE' });
+      const r = await fetch('/api/products/' + id, { method: 'DELETE' });
+      if (r.status === 401) { window.location.href = '/Admin/Login'; return; }
       loadAdminProducts();
     }));
   } catch (e) { el.innerText = 'Erro ao carregar produtos'; }
 }
+
+// File upload
+document.getElementById('upload-image-btn')?.addEventListener('click', () => {
+  document.getElementById('image-file')?.click();
+});
+
+document.getElementById('image-file')?.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    if (res.status === 401) { window.location.href = '/Admin/Login'; return; }
+    const data = await res.json();
+    if (data.url) {
+      document.querySelector('[name="image"]').value = data.url;
+    }
+  } catch (err) {
+    alert('Erro ao fazer upload da imagem');
+  }
+});
 
 document.getElementById('product-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -124,15 +150,22 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
     sizesJson: sizes.length > 0 ? JSON.stringify(sizes) : null
   };
   if (f.elements['category']) body.category = f.elements['category'].value;
+  if (f.elements['available']) body.available = f.elements['available'].checked;
 
-  if (id) {
-    await fetch('/api/products/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  } else {
-    await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const req = (url, opts) => fetch(url, opts).then(r => { if (r.status === 401) { window.location.href = '/Admin/Login'; throw new Error('Não autenticado'); } return r; });
+
+  try {
+    if (id) {
+      await req('/api/products/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    } else {
+      await req('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    }
+    f.reset();
+    renderSizeEditor([]);
+    loadAdminProducts();
+  } catch (err) {
+    alert('Erro ao salvar produto');
   }
-  f.reset();
-  renderSizeEditor([]);
-  loadAdminProducts();
 });
 
 document.getElementById('reset-form')?.addEventListener('click', () => {

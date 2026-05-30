@@ -51,6 +51,12 @@ public class Order
     [JsonPropertyName("createdAt")]
     public string CreatedAt { get; set; } = DateTime.UtcNow.ToString("o");
 
+    [JsonPropertyName("couponCode")]
+    public string? CouponCode { get; set; }
+
+    [JsonPropertyName("discount")]
+    public decimal Discount { get; set; }
+
     [JsonPropertyName("updatedAt")]
     public string UpdatedAt { get; set; } = DateTime.UtcNow.ToString("o");
 }

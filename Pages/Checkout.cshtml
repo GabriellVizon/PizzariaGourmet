@@ -20,22 +20,12 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="email">E-mail</label>
-            <input id="email" name="email" type="email" placeholder="seu@email.com" />
-          </div>
-          <div class="form-group">
             <label for="address">Endereço de entrega</label>
             <input id="address" name="address" required placeholder="Rua, número, bairro, complemento" />
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="cpf">CPF (para nota fiscal)</label>
-              <input id="cpf" name="cpf" placeholder="000.000.000-00" />
-            </div>
-            <div class="form-group">
-              <label for="number">Número</label>
-              <input id="number" name="number" placeholder="Nº" />
-            </div>
+          <div class="form-group">
+            <label for="cpf">CPF (para nota fiscal)</label>
+            <input id="cpf" name="cpf" placeholder="000.000.000-00" />
           </div>
           <div class="form-group">
             <label for="notes">Observações</label>
@@ -60,26 +50,11 @@
           </div>
 
           <div class="payment-detail payment-detail-card" id="payment-detail-card">
-            <div class="card-row">
-              <div class="form-group card-full">
-                <label for="card-number">Número do Cartão</label>
-                <input id="card-number" name="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19" />
-              </div>
-            </div>
-            <div class="card-row">
-              <div class="form-group card-full">
-                <label for="card-name">Nome no Cartão</label>
-                <input id="card-name" name="cardName" placeholder="Nome como está no cartão" />
-              </div>
-            </div>
-            <div class="card-row">
-              <div class="form-group">
-                <label for="card-expiry">Validade</label>
-                <input id="card-expiry" name="cardExpiry" placeholder="MM/AA" maxlength="5" />
-              </div>
-              <div class="form-group">
-                <label for="card-cvv">CVV</label>
-                <input id="card-cvv" name="cardCvv" type="text" inputmode="numeric" placeholder="123" maxlength="4" />
+            <div class="card-info-box">
+              <div class="card-info-icon">🔒</div>
+              <div class="card-info-text">
+                <strong>Pagamento seguro via Stripe</strong>
+                <p style="margin:4px 0 0;font-size:0.85rem">Você será redirecionado para o ambiente seguro do Stripe para finalizar o pagamento com cartão de crédito.</p>
               </div>
             </div>
           </div>
@@ -89,6 +64,7 @@
               <div class="pix-qr-box" id="pix-qr-box"></div>
               <p class="pix-instruction">Escaneie o código QR abaixo com seu aplicativo do banco</p>
               <span class="pix-key-text">contato@pizzariagourmet.com</span>
+              <p style="font-size:0.8rem;color:var(--text-light);margin-top:8px">⏳ O pagamento será confirmado manualmente após a transferência.</p>
             </div>
           </div>
 
@@ -120,6 +96,15 @@
             <span>Subtotal</span>
             <span id="checkout-subtotal" style="font-weight:600">R$ 0,00</span>
           </div>
+          <div class="checkout-coupon">
+            <input id="coupon-input" placeholder="Cupom de desconto" style="flex:1" />
+            <button id="coupon-apply" type="button" style="padding:8px 16px;background:var(--brand);color:#fff;border:none;border-radius:50px;font-weight:600;cursor:pointer">Aplicar</button>
+          </div>
+          <div id="coupon-result" style="font-size:0.85rem;margin-bottom:8px"></div>
+          <div class="checkout-summary-item" id="checkout-discount-row" style="display:none">
+            <span>Desconto</span>
+            <span id="checkout-discount" style="font-weight:600;color:var(--accent)">-R$ 0,00</span>
+          </div>
           <div class="checkout-summary-item">
             <span>Taxa de entrega</span>
             <span id="checkout-delivery" style="font-weight:600">R$ 0,00</span>
@@ -137,6 +122,7 @@
 <script>
 let DELIVERY_FEE = 5.00;
 let FREE_DELIVERY_MIN = 50.00;
+let appliedCoupon = null;
 
 function formatPrice(p) {
   return p.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -157,7 +143,8 @@ function renderCheckoutSummary() {
   const el = document.getElementById('checkout-items');
   const subtotal = cart.reduce((s, i) => s + getItemTotal(i), 0);
   const delivery = getBaseSubtotal(cart) >= FREE_DELIVERY_MIN ? 0 : DELIVERY_FEE;
-  const total = subtotal + delivery;
+  const discount = appliedCoupon ? appliedCoupon.discount : 0;
+  const total = Math.max(0, subtotal + delivery - discount);
 
   if (cart.length === 0) {
     el.innerHTML = '<div style="color:var(--text-light);text-align:center;padding:16px 0">Carrinho vazio</div>';
@@ -178,6 +165,14 @@ function renderCheckoutSummary() {
     }).join('');
   }
 
+  const discountRow = document.getElementById('checkout-discount-row');
+  if (discount > 0) {
+    discountRow.style.display = 'flex';
+    document.getElementById('checkout-discount').textContent = `-R$ ${formatPrice(discount)}`;
+  } else {
+    discountRow.style.display = 'none';
+  }
+
   document.getElementById('checkout-subtotal').textContent = `R$ ${formatPrice(subtotal)}`;
   document.getElementById('checkout-delivery').textContent = delivery === 0 ? 'Grátis' : `R$ ${formatPrice(delivery)}`;
   document.getElementById('checkout-total').textContent = `R$ ${formatPrice(total)}`;
@@ -189,6 +184,9 @@ function renderCheckoutSummary() {
     const data = await res.json();
     DELIVERY_FEE = data.deliveryFee;
     FREE_DELIVERY_MIN = data.freeDeliveryMin;
+    if (data.pixKey) PIX_KEY = data.pixKey;
+    if (data.whatsapp) WHATSAPP = data.whatsapp;
+    if (data.storeName) STORE_NAME = data.storeName;
   } catch (e) {
     console.error('Erro ao carregar configurações:', e);
   }
@@ -234,28 +232,76 @@ function renderCheckoutSummary() {
 
   document.getElementById('cash-amount')?.addEventListener('input', updateCashChange);
 
-  function formatCardNumber(v) {
-    return v.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
+  document.getElementById('payment-detail-card')?.classList.add('active');
+
+  // Coupon
+  document.getElementById('coupon-apply')?.addEventListener('click', async () => {
+    const input = document.getElementById('coupon-input');
+    const code = input.value.trim();
+    if (!code) return;
+
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const subtotal = cart.reduce((s, i) => s + getItemTotal(i), 0);
+
+    try {
+      const res = await fetch(`/api/coupons/validate?code=${encodeURIComponent(code)}&subtotal=${subtotal}`);
+      const data = await res.json();
+      const resultEl = document.getElementById('coupon-result');
+
+      if (data.valid) {
+        appliedCoupon = data;
+        resultEl.innerHTML = `<span style="color:#27ae60;font-weight:600">✓ Cupom aplicado! (-R$ ${formatPrice(data.discount)})</span>`;
+        input.disabled = true;
+        document.getElementById('coupon-apply').disabled = true;
+        renderCheckoutSummary();
+      } else {
+        appliedCoupon = null;
+        resultEl.innerHTML = `<span style="color:var(--brand)">${data.error || 'Cupom inválido'}</span>`;
+      }
+    } catch {
+      document.getElementById('coupon-result').innerHTML = `<span style="color:var(--brand)">Erro ao validar cupom</span>`;
+    }
+  });
+
+  function crc16CCITT(data) {
+    let crc = 0xFFFF;
+    for (let i = 0; i < data.length; i++) {
+      crc ^= data.charCodeAt(i) << 8;
+      for (let j = 0; j < 8; j++) {
+        if (crc & 0x8000) crc = (crc << 1) ^ 0x1021;
+        else crc = crc << 1;
+        crc &= 0xFFFF;
+      }
+    }
+    return crc.toString(16).toUpperCase().padStart(4, '0');
   }
 
-  document.getElementById('card-number')?.addEventListener('input', function() {
-    this.value = formatCardNumber(this.value);
-  });
+  function generatePixPayload(total) {
+    const pixKey = typeof PIX_KEY !== 'undefined' ? PIX_KEY : 'contato@pizzariagourmet.com';
+    const storeName = typeof STORE_NAME !== 'undefined' ? STORE_NAME.substring(0, 25) : 'PizzariaGourmet';
+    const amount = total.toFixed(2);
 
-  document.getElementById('card-expiry')?.addEventListener('input', function() {
-    let v = this.value.replace(/\D/g, '');
-    if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2,4);
-    this.value = v;
-  });
+    let payload = '000201';
+    payload += '010212';
+    payload += '26' + String(14 + pixKey.length).padStart(2, '0') + '0014BR.GOV.BCB.PIX01' + String(pixKey.length).padStart(2, '0') + pixKey;
+    payload += '52040000';
+    payload += '5303986';
+    payload += '54' + String(amount.length).padStart(2, '0') + amount;
+    payload += '5802BR';
+    payload += '59' + String(storeName.length).padStart(2, '0') + storeName;
+    payload += '6008Sao Paulo';
+    payload += '62070503***';
+    payload += '6304';
 
-  document.getElementById('payment-detail-card')?.classList.add('active');
+    const crc = crc16CCITT(payload);
+    return payload + crc;
+  }
 
   function generatePixQrCode() {
     const box = document.getElementById('pix-qr-box');
     if (box.querySelector('img')) return;
     const total = getTotal();
-    const pixKey = 'contato@pizzariagourmet.com';
-    const payload = '00020101021226880014BR.GOV.BCB.PIX0136' + pixKey + '52040000530398654' + total.toFixed(2).replace('.', '') + '5802BR5913PizzariaGourmet6008Sao Paulo62070503***6304';
+    const payload = generatePixPayload(total);
     const img = document.createElement('img');
     img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(payload);
     img.alt = 'QR Code PIX';
@@ -290,14 +336,13 @@ document.getElementById('checkout-form').addEventListener('submit', async (e) =>
     customer: {
       name: data.get('name'),
       phone: data.get('phone'),
-      email: data.get('email'),
       address: data.get('address'),
       cpf: data.get('cpf'),
-      number: data.get('number'),
       notes: data.get('notes')
     },
     paymentMethod: data.get('paymentMethod') || 'card',
-    cart: cart
+    cart: cart,
+    couponCode: appliedCoupon ? appliedCoupon.code : null
   };
 
   try {
