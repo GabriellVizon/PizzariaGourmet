@@ -1,87 +1,130 @@
-PizzariaGourmet — Protótipo ASP.NET Core (minimal)
+# PizzariaGourmet
 
-Requisitos:
-- .NET 10 SDK instalado (ou ajuste o TargetFramework se necessário)
+Sistema completo de delivery de pizzaria com cardápio online, carrinho, checkout, pagamento, rastreio e painel administrativo.
 
-Instalação de dependências:
+## Requisitos
 
-```powershell
-cd C:\Users\Etec\Desktop\PizzariaGourmet
-dotnet restore
-dotnet add package Stripe.net
-```
+- .NET 10 SDK
+- SQLite (embutido, sem instalação necessária)
 
-Como rodar:
+## Como rodar
 
 ```powershell
-cd C:\Users\Etec\Desktop\PizzariaGourmet
+cd PizzariaGourmet
 dotnet run
 ```
 
-Páginas:
-- `/` — Página do cardápio (consome `/api/products`)
-- `/Checkout` — Formulário de checkout (envia para `/api/checkout`)
+Acesse em http://localhost:5000
 
-Pagamento:
-- Este scaffold inclui integração com Stripe.
+## Funcionalidades
 
-Configurar as variáveis de ambiente antes de rodar (Windows PowerShell exemplo):
+### Cliente
+- **Cardápio** — Produtos com categorias, tamanhos (P/M/G), complementos
+- **Carrinho** — Sidebar com quantidades, remove itens
+- **Checkout** — Formulário com nome, telefone, endereço, CPF, observações
+- **Pagamentos:**
+  - **Cartão de Crédito** — Via Stripe (ambiente seguro)
+  - **PIX** — QR Code dinâmico gerado no frontend com CRC16-CCITT
+  - **Dinheiro** — Cálculo de troco automático
+- **Cupons de desconto** — Percentual ou valor fixo, aplicados no checkout
+- **Rastreio** — Acompanhar pedido por telefone ou número do pedido
+- **Histórico** — Buscar todos os pedidos pelo telefone
 
+### Administrativo (`/Admin/Login`)
+- **Dashboard** — Resumo com pedidos pendentes, hoje, faturamento, notificação sonora de novos pedidos
+- **Pedidos** — Lista com filtros (nome, telefone, status, data), detalhes, atualização de status, impressão, exclusão
+- **Produtos** — CRUD completo com upload de imagens e editor de tamanhos
+- **Complementos** — CRUD de ingredientes extras
+- **Cupons** — CRUD com código, tipo, valor, pedido mínimo, validade, usos máximos
+- **Configurações** — Taxa de entrega, frete grátis, WhatsApp da loja, chave PIX, nome da loja
+
+### Notificações
+- **WhatsApp** — Notificação ao cliente sobre mudança de status (API HTTP configurável)
+- **Email** — Via SMTP (opcional)
+- **SMS** — Via Twilio (opcional)
+- **Som** — Alerta sonoro no admin para novos pedidos
+
+## Variáveis de Ambiente
+
+### Stripe (pagamento com cartão)
 ```powershell
 $env:STRIPE_API_KEY = "sk_test_..."
-$env:STRIPE_WEBHOOK_SECRET = "whsec_..." # opcional para validar webhooks
-$env:DOMAIN = "https://seu-dominio.com" # URL pública usada nos retornos
-dotnet run
+$env:STRIPE_WEBHOOK_SECRET = "whsec_..."
+$env:DOMAIN = "http://localhost:5000"
 ```
 
-Fluxo do Stripe:
-- Cliente chama `/create-checkout-session` com o `cart` no body (JSON). O servidor cria uma `Session` no Stripe e retorna `url` para redirecionar o usuário para o checkout seguro da Stripe.
-- Webhook `/webhook` verifica eventos (ex.: `checkout.session.completed`) e deve marcar o pedido como pago no seu banco.
-
-Observação: as chaves privadas devem ficar fora do código — use variáveis de ambiente ou um secret manager.
-
-Testando webhooks localmente:
-
-1. Instale o Stripe CLI: https://stripe.com/docs/stripe-cli
-2. Rode o seu app localmente: `dotnet run`
-3. No terminal, rode (exemplo):
-
+### WhatsApp (notificações para o cliente)
 ```powershell
-stripe login
-stripe listen --forward-to localhost:5000/webhook
+$env:WHATSAPP_API_URL = "https://seu-provedor/api/enviar"
+$env:WHATSAPP_API_KEY = "sua-chave"
+```
+Compatível com Evolution API, Z-API, WhatsApp Cloud API, etc.
+Se não configurado, as notificações são ignoradas silenciosamente.
+
+### Email (notificações para o admin)
+```powershell
+$env:SMTP_HOST = "smtp.exemplo.com"
+$env:SMTP_PORT = "587"
+$env:SMTP_USER = "seu@email.com"
+$env:SMTP_PASS = "sua-senha"
+$env:NOTIFY_EMAIL_TO = "admin@exemplo.com"
 ```
 
-Isso vai encaminhar eventos do Stripe para seu endpoint `/webhook` local para testes.
-
-Observações sobre custos: o Stripe não cobra mensalidade, mas aplica taxas por transação. Para um gateway totalmente gratuito sem taxas, geralmente não há opção confiável — marketplaces/bancos locais podem ter alternativas.
-
-Configurar envio de email (notificações):
-
-Defina as seguintes variáveis de ambiente para que o webhook envie um email ao confirmar o pagamento:
-
-```
-SMTP_HOST=smtp.exemplo.com
-SMTP_PORT=587
-SMTP_USER=seu_usuario
-SMTP_PASS=sua_senha
-NOTIFY_EMAIL_TO=seu@email.com
+### SMS (Twilio)
+```powershell
+$env:TWILIO_ACCOUNT_SID = "ACxxx"
+$env:TWILIO_AUTH_TOKEN = "xxx"
+$env:TWILIO_FROM = "+15551234567"
+$env:NOTIFY_PHONE_TO = "+5511999999999"
 ```
 
-Você pode usar o SMTP do Gmail (requer app password) ou um serviço como SendGrid/Mailgun (tem planos gratuitos com limites). O envio de email é opcional — se as variáveis não estiverem configuradas, o webhook continuará atualizando o pedido no banco.
-
-Configurar SMS/WhatsApp via Twilio (opcional):
-
+### Admin (credenciais padrão — configurável via `appsettings.json`)
 ```
-TWILIO_ACCOUNT_SID=ACxxx
-TWILIO_AUTH_TOKEN=xxxx
-TWILIO_FROM=+1555...           # exemplo: "+15551234567" ou "whatsapp:+1415..."
-NOTIFY_PHONE_TO=+55XXXXXXXXX   # destino (pode ser whatsapp:+55... para WhatsApp via Twilio)
+Email: admin@pizzariagourmet.com
+Senha: Admin@123
 ```
 
-Observação: o Twilio tem plano trial e cobra por mensagens/uso; para WhatsApp via Twilio é necessário número habilitado em sandbox/produção.
+## Páginas
 
-Personalização rápida:
-- Substitua `Data/products.json` pelos produtos reais.
-- Adicione imagens em `wwwroot/images/` e atualize os caminhos no JSON.
+| Rota | Descrição |
+|---|---|
+| `/` | Cardápio |
+| `/Carrinho` | Revisão do carrinho |
+| `/Checkout` | Finalizar pedido |
+| `/Success` | Confirmação do pedido |
+| `/Rastreio` | Rastrear pedido |
+| `/Historico` | Histórico de pedidos |
+| `/Admin/Login` | Login administrativo |
+| `/Admin/Index` | Dashboard admin |
+| `/Admin/Orders` | Gerenciar pedidos |
+| `/Admin/Order` | Detalhe do pedido |
+| `/Admin/Products` | Gerenciar produtos |
+| `/Admin/Complements` | Gerenciar complementos |
+| `/Admin/Coupons` | Gerenciar cupons |
+| `/Admin/Settings` | Configurações da loja |
 
-Se quiser, eu já configuro a integração com Stripe ou adapto para C# ASP.NET com um painel de administração — diga qual gateway prefere e eu implemento os trechos necessários e explico como funcionar.
+## APIs
+
+| Método | Rota | Descrição | Auth |
+|---|---|---|---|
+| GET | `/api/settings` | Configurações da loja | Não |
+| PUT | `/api/settings` | Atualizar configurações | Admin |
+| GET | `/api/products` | Listar produtos | Não |
+| POST | `/api/products` | Criar produto | Admin |
+| PUT | `/api/products/{id}` | Atualizar produto | Admin |
+| DELETE | `/api/products/{id}` | Excluir produto | Admin |
+| GET | `/api/complements` | Listar complementos | Não |
+| GET | `/api/complements/available` | Complementos disponíveis | Não |
+| POST | `/api/complements` | Criar complemento | Admin |
+| PUT | `/api/complements/{id}` | Atualizar complemento | Admin |
+| DELETE | `/api/complements/{id}` | Excluir complemento | Admin |
+| GET | `/api/coupons` | Listar cupons | Não |
+| GET | `/api/coupons/validate` | Validar cupom | Não |
+| POST | `/api/coupons` | Criar cupom | Admin |
+| PUT | `/api/coupons/{id}` | Atualizar cupom | Admin |
+| DELETE | `/api/coupons/{id}` | Excluir cupom | Admin |
+| POST | `/create-checkout-session` | Criar pedido | Não |
+| GET | `/api/orders/new-count` | Novos pedidos (polling) | Não |
+| POST | `/api/upload` | Upload de imagem | Admin |
+| POST | `/webhook` | Webhook Stripe | Não |
+| GET | `/session/{id}` | Consultar sessão Stripe | Não |
