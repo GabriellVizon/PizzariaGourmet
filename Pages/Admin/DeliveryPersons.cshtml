@@ -1,0 +1,127 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@{
+  Layout = "_Layout";
+}
+
+<div class="admin-page">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+      <h2 style="margin:0">🏍️ Entregadores</h2>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+        <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">Dashboard</a>
+        <a href="/Admin/Orders" style="color:var(--text-light);font-weight:600;text-decoration:none">Pedidos</a>
+        <a href="/Admin/Settings" style="color:var(--text-light);font-weight:600;text-decoration:none">Config</a>
+        <a href="/Admin/Logout" style="color:#e74c3c;font-weight:600;text-decoration:none;font-size:0.85rem">Sair</a>
+      </div>
+    </div>
+
+    <div class="admin-panel">
+      <form id="person-form">
+        <input type="hidden" name="id" />
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+          <div>
+            <label>Nome</label>
+            <input name="name" required placeholder="Nome do entregador" />
+          </div>
+          <div>
+            <label>Telefone</label>
+            <input name="phone" placeholder="(24) 99999-9999" />
+          </div>
+          <div>
+            <label>Veículo</label>
+            <input name="vehicle" placeholder="Ex: Moto, Carro" />
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:16px;align-items:center">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer">
+            <input name="isAvailable" type="checkbox" checked value="true" style="width:auto" />
+            Disponível
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer">
+            <input name="isActive" type="checkbox" checked value="true" style="width:auto" />
+            Ativo
+          </label>
+        </div>
+        <div style="margin-top:12px">
+          <button type="submit">Salvar</button>
+          <button type="button" id="reset-person-form">Limpar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="admin-panel">
+      <h3>Entregadores</h3>
+      <div id="persons-list">Carregando...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadPersons() {
+  const el = document.getElementById('persons-list');
+  try {
+    const r = await fetch('/api/delivery-persons');
+    const list = await r.json();
+    if (!list.length) { el.innerText = 'Nenhum entregador cadastrado.'; return; }
+    el.innerHTML = `<div class="admin-table-wrap"><table class="admin-table">
+      <thead><tr><th>Nome</th><th>Telefone</th><th>Veículo</th><th>Disponível</th><th>Ativo</th><th>Ações</th></tr></thead><tbody>${list.map(p => `
+        <tr>
+          <td>${p.name}</td>
+          <td>${p.phone || '-'}</td>
+          <td>${p.vehicle || '-'}</td>
+          <td>${p.isAvailable ? '✅' : '❌'}</td>
+          <td>${p.isActive ? '✅' : '❌'}</td>
+          <td><button data-id="${p.id}" class="btn-sm btn-edit-person">Editar</button> <button data-id="${p.id}" class="btn-sm btn-del-person">Excluir</button></td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+    document.querySelectorAll('.btn-edit-person').forEach(b => b.addEventListener('click', async (e) => {
+      const id = Number(e.currentTarget.dataset.id);
+      const r = await fetch('/api/delivery-persons/' + id);
+      const p = await r.json();
+      const f = document.getElementById('person-form');
+      f.elements['id'].value = p.id;
+      f.elements['name'].value = p.name;
+      f.elements['phone'].value = p.phone || '';
+      f.elements['vehicle'].value = p.vehicle || '';
+      if (f.elements['isAvailable']) f.elements['isAvailable'].checked = p.isAvailable !== false;
+      if (f.elements['isActive']) f.elements['isActive'].checked = p.isActive !== false;
+    }));
+    document.querySelectorAll('.btn-del-person').forEach(b => b.addEventListener('click', async (e) => {
+      if (!confirm('Excluir entregador?')) return;
+      const id = Number(e.currentTarget.dataset.id);
+      await fetch('/api/delivery-persons/' + id, { method: 'DELETE' });
+      loadPersons();
+    }));
+  } catch { el.innerText = 'Erro ao carregar'; }
+}
+
+document.getElementById('person-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const id = f.elements['id'].value;
+  const body = {
+    name: f.elements['name'].value,
+    phone: f.elements['phone'].value,
+    vehicle: f.elements['vehicle'].value,
+    isAvailable: f.elements['isAvailable'] ? f.elements['isAvailable'].checked : true,
+    isActive: f.elements['isActive'] ? f.elements['isActive'].checked : true
+  };
+  try {
+    if (id) {
+      await fetch('/api/delivery-persons/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    } else {
+      await fetch('/api/delivery-persons', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    }
+    f.reset();
+    loadPersons();
+  } catch { alert('Erro ao salvar'); }
+});
+
+document.getElementById('reset-person-form').addEventListener('click', () => {
+  document.getElementById('person-form').reset();
+});
+
+loadPersons();
+</script>

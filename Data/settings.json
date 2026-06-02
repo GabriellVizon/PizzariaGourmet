@@ -3,5 +3,10 @@
   "freeDeliveryMin": 50.00,
   "whatsapp": "5524992206707",
   "pixKey": "contato@pizzariagourmet.com",
-  "storeName": "Pizzaria Gourmet"
+  "storeName": "Pizzaria Gourmet",
+  "minScheduleMinutes": 60,
+  "scheduleEnabled": true,
+  "allowScheduling": true,
+  "address": "Rua Exemplo, 123 - Centro",
+  "cnpj": "00.000.000/0001-00"
 }

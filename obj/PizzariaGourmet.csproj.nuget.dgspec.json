@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\PizzariaGourmet\\PizzariaGourmet.csproj": {}
+    "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\Programazione\\PizzariaGourmet\\PizzariaGourmet.csproj": {}
   },
   "projects": {
-    "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\PizzariaGourmet\\PizzariaGourmet.csproj": {
+    "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\Programazione\\PizzariaGourmet\\PizzariaGourmet.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\PizzariaGourmet\\PizzariaGourmet.csproj",
+        "projectUniqueName": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\Programazione\\PizzariaGourmet\\PizzariaGourmet.csproj",
         "projectName": "PizzariaGourmet",
-        "projectPath": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\PizzariaGourmet\\PizzariaGourmet.csproj",
+        "projectPath": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\Programazione\\PizzariaGourmet\\PizzariaGourmet.csproj",
         "packagesPath": "C:\\Users\\gabri\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\PizzariaGourmet\\obj\\",
+        "outputPath": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\Programazione\\PizzariaGourmet\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\gabri\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -61,10 +61,6 @@
             "Microsoft.EntityFrameworkCore.Sqlite": {
               "target": "Package",
               "version": "[10.0.8, )"
-            },
-            "Stripe.net": {
-              "target": "Package",
-              "version": "[51.2.0, )"
             }
           },
           "imports": [

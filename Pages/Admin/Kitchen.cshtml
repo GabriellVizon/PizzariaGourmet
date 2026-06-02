@@ -1,0 +1,158 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin,Cozinha")]
+@{
+  Layout = "_Layout";
+}
+
+<div class="admin-page">
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+      <h2 style="margin:0">👨‍🍳 Cozinha - Pedidos Pendentes</h2>
+      <div style="display:flex;gap:12px;align-items:center">
+        <span id="order-count" style="font-size:0.85rem;color:var(--text-light)">0 pedidos</span>
+        <button onclick="loadKitchenOrders()" style="font-size:0.85rem">🔄 Atualizar</button>
+        <a href="/Admin/Logout" style="color:#e74c3c;font-weight:600;text-decoration:none;font-size:0.85rem">Sair</a>
+      </div>
+    </div>
+
+    <div id="kitchen-orders">
+      <div style="text-align:center;padding:40px;color:var(--text-light)">Carregando pedidos da cozinha...</div>
+    </div>
+  </div>
+</div>
+
+<style>
+.kitchen-card {
+  background:#fff;
+  border:2px solid #e0e0e0;
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:12px;
+  page-break-inside:avoid;
+  break-inside:avoid;
+}
+.kitchen-card.highlight {
+  border-color:var(--brand);
+  box-shadow:0 0 0 2px rgba(231,76,60,0.1);
+}
+.kitchen-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+  padding-bottom:8px;
+  border-bottom:2px dashed #eee;
+}
+.kitchen-order-id {
+  font-size:1.2rem;
+  font-weight:800;
+  font-family:monospace;
+}
+.kitchen-time {
+  font-size:0.8rem;
+  color:var(--text-light);
+}
+.kitchen-items {
+  margin-bottom:12px;
+}
+.kitchen-item {
+  padding:4px 0;
+  border-bottom:1px solid #f5f5f5;
+}
+.kitchen-item-name {
+  font-weight:600;
+}
+.kitchen-item-detail {
+  font-size:0.85rem;
+  color:#666;
+  margin-left:12px;
+}
+.kitchen-footer {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid #eee;
+}
+.kitchen-customer {
+  font-size:0.85rem;
+}
+@@media print {
+  .site-header, .site-footer, .admin-page .container > div:first-child, button, a { display:none !important; }
+  .kitchen-card { border:1px solid #000; page-break-inside:avoid; }
+  body { background:#fff; }
+}
+</style>
+
+<script>
+async function loadKitchenOrders() {
+  const el = document.getElementById('kitchen-orders');
+  try {
+    const r = await fetch('/api/kitchen/orders');
+    const orders = await r.json();
+    document.getElementById('order-count').textContent = orders.length + ' pedido(s)';
+
+    if (orders.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-light);font-size:1.2rem">✅ Nenhum pedido pendente na cozinha.</div>';
+      return;
+    }
+
+    el.innerHTML = orders.map(o => {
+      let itemsHtml = '';
+      try {
+        const doc = JSON.parse(o.items);
+        const cart = doc.cart || doc;
+        const items = Array.isArray(cart) ? cart : [];
+        itemsHtml = items.map(i => {
+          const size = i.size ? ` (${i.size.name})` : '';
+          const comps = i.complements && i.complements.length > 0
+            ? `<div class="kitchen-item-detail">+ ${i.complements.map(c => c.name).join(', ')}</div>`
+            : '';
+          return `<div class="kitchen-item">
+            <div class="kitchen-item-name">${i.qty}x ${i.name}${size}</div>
+            ${comps}
+          </div>`;
+        }).join('');
+      } catch { itemsHtml = '<div>Erro ao carregar itens</div>'; }
+
+      const date = new Date(o.createdAt);
+      const timeStr = date.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+      const isNew = (Date.now() - date.getTime()) < 300000;
+
+      return `<div class="kitchen-card ${isNew ? 'highlight' : ''}">
+        <div class="kitchen-header">
+          <div class="kitchen-order-id">#${o.id.slice(0,8)}</div>
+          <div class="kitchen-time">${timeStr}${o.scheduledTime ? ' (Agendado: '+o.scheduledTime+')' : ''}</div>
+        </div>
+        <div class="kitchen-items">${itemsHtml}</div>
+        <div class="kitchen-footer">
+          <div class="kitchen-customer">
+            <strong>${o.customerName}</strong> — ${o.customerAddress || ''}
+            ${o.customerNotes ? '<br><span style="color:var(--brand);font-size:0.8rem">Obs: '+o.customerNotes+'</span>' : ''}
+          </div>
+          <button onclick="markPrinted('${o.id}')" style="background:#27ae60;color:#fff;border:none;padding:6px 16px;border-radius:50px;font-weight:600;cursor:pointer;font-size:0.85rem">
+            ✅ Pronto - Imprimir
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--brand)">Erro ao carregar pedidos.</div>';
+  }
+}
+
+window.markPrinted = async function(orderId) {
+  try {
+    await fetch('/api/kitchen/print/' + orderId, { method: 'POST' });
+    loadKitchenOrders();
+    window.print();
+  } catch { alert('Erro ao marcar como impresso'); }
+};
+
+loadKitchenOrders();
+setInterval(loadKitchenOrders, 15000);
+</script>

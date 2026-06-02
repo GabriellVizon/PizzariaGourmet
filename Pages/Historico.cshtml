@@ -60,14 +60,52 @@
 
           <div style="margin-top:12px;font-size:0.9rem;display:flex;gap:16px;flex-wrap:wrap">
             <span><strong>Total:</strong> R$ @pedido.Total.ToString("F2")</span>
-            <span><strong>Pagamento:</strong> @pedido.PaymentMethod</span>
+            <span><strong>Pagamento:</strong> @(pedido.PaymentMethod switch { "card" => "Cartão de Crédito", "pix" => "PIX", "cash" => "Dinheiro", _ => pedido.PaymentMethod })</span>
           </div>
 
-          <div style="margin-top:12px">
+          <div style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
             <a href="/Rastreio?PedidoId=@pedido.Id" style="color:var(--brand);font-weight:600;text-decoration:none">📦 Acompanhar Pedido →</a>
+            @if (pedido.Status == "pending" || pedido.Status == "paid")
+            {
+              <form method="post" asp-page="/Rastreio" asp-page-handler="cancel" onsubmit="return confirm('Tem certeza que deseja cancelar este pedido?')" style="display:inline">
+                <input type="hidden" name="orderId" value="@pedido.Id" />
+                <input type="hidden" name="telefone" value="@Model.Telefone" />
+                <button type="submit" style="padding:6px 16px;background:#e74c3c;color:#fff;border:none;border-radius:50px;font-weight:600;cursor:pointer;font-size:0.8rem">
+                  Cancelar
+                </button>
+              </form>
+            }
+            <button onclick="reorder('@pedido.Items.Replace("'", "\\'")')" style="padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:50px;font-weight:600;cursor:pointer;font-size:0.8rem">
+              🔄 Pedir Novamente
+            </button>
           </div>
         </div>
       }
     }
   }
 </div>
+
+<script>
+function reorder(itemsJson) {
+  try {
+    const data = JSON.parse(itemsJson);
+    let cart = [];
+
+    if (Array.isArray(data)) {
+      cart = data;
+    } else if (data.cart && Array.isArray(data.cart)) {
+      cart = data.cart;
+    }
+
+    if (cart.length === 0) {
+      alert('Não foi possível recuperar os itens do pedido.');
+      return;
+    }
+
+    localStorage.setItem('cart', JSON.stringify(cart));
+    window.location.href = '/Carrinho';
+  } catch (e) {
+    alert('Erro ao recuperar itens do pedido.');
+  }
+}
+</script>

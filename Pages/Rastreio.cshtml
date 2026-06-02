@@ -114,10 +114,67 @@
 
           <div style="margin-top:12px;font-size:0.9rem;display:flex;gap:16px;flex-wrap:wrap">
             <span><strong>Total:</strong> R$ @pedido.Total.ToString("F2")</span>
-            <span><strong>Pagamento:</strong> @pedido.PaymentMethod</span>
+            <span><strong>Pagamento:</strong> @(pedido.PaymentMethod switch { "card" => "Cartão de Crédito", "pix" => "PIX", "cash" => "Dinheiro", _ => pedido.PaymentMethod })</span>
           </div>
+
+          @if (pedido.Status == "pending" || pedido.Status == "paid")
+          {
+            <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap">
+              <button onclick="reorder('@pedido.Items.Replace("'", "\\'")')" style="padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:50px;font-weight:600;cursor:pointer;font-size:0.85rem">
+                🔄 Pedir Novamente
+              </button>
+              <form method="post" asp-page-handler="cancel" onsubmit="return confirm('Tem certeza que deseja cancelar este pedido?')">
+                <input type="hidden" name="orderId" value="@pedido.Id" />
+                <input type="hidden" name="telefone" value="@Model.Telefone" />
+                <input type="hidden" name="pedidoId" value="@Model.PedidoId" />
+                <button type="submit" style="padding:8px 20px;background:#e74c3c;color:#fff;border:none;border-radius:50px;font-weight:600;cursor:pointer;font-size:0.85rem">
+                  Cancelar Pedido
+                </button>
+              </form>
+            </div>
+          }
+          else if (pedido.Status == "delivered" || pedido.Status == "cancelled")
+          {
+            <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;text-align:right">
+              <button onclick="reorder('@pedido.Items.Replace("'", "\\'")')" style="padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:50px;font-weight:600;cursor:pointer;font-size:0.85rem">
+                🔄 Pedir Novamente
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      @if (!string.IsNullOrEmpty(Model.CancelResult))
+      {
+        <div class="admin-panel" style="margin-top:16px;text-align:center;background:#e8f5e9;border:2px solid #27ae60">
+          <span style="color:#27ae60;font-weight:700">@Model.CancelResult</span>
         </div>
       }
     }
   }
 </div>
+
+<script>
+function reorder(itemsJson) {
+  try {
+    const data = JSON.parse(itemsJson);
+    let cart = [];
+
+    if (Array.isArray(data)) {
+      cart = data;
+    } else if (data.cart && Array.isArray(data.cart)) {
+      cart = data.cart;
+    }
+
+    if (cart.length === 0) {
+      alert('Não foi possível recuperar os itens do pedido.');
+      return;
+    }
+
+    localStorage.setItem('cart', JSON.stringify(cart));
+    window.location.href = '/Carrinho';
+  } catch (e) {
+    alert('Erro ao recuperar itens do pedido.');
+  }
+}
+</script>

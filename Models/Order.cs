@@ -59,4 +59,22 @@ public class Order
 
     [JsonPropertyName("updatedAt")]
     public string UpdatedAt { get; set; } = DateTime.UtcNow.ToString("o");
+
+    [JsonPropertyName("scheduledTime")]
+    public string? ScheduledTime { get; set; }
+
+    [JsonPropertyName("deliveryPersonId")]
+    public int? DeliveryPersonId { get; set; }
+
+    [JsonPropertyName("deliveryPersonName")]
+    public string? DeliveryPersonName { get; set; }
+
+    [JsonPropertyName("customerId")]
+    public int? CustomerId { get; set; }
+
+    [JsonPropertyName("printed")]
+    public bool Printed { get; set; } = false;
+
+    [JsonPropertyName("printedAt")]
+    public string? PrintedAt { get; set; }
 }

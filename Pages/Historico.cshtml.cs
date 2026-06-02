@@ -17,7 +17,7 @@ public class HistoricoModel : PageModel
     public List<OrderHistoryDto> Pedidos { get; set; } = new();
     public bool Buscou { get; set; }
 
-    public record OrderHistoryDto(string Id, string Status, string CreatedAt, decimal Total, string PaymentMethod);
+    public record OrderHistoryDto(string Id, string Status, string CreatedAt, decimal Total, string PaymentMethod, string Items);
 
     public async Task<IActionResult> OnPostAsync()
     {
@@ -26,7 +26,7 @@ public class HistoricoModel : PageModel
         if (!string.IsNullOrEmpty(Telefone))
         {
             var orders = await _orderSvc.GetByPhoneAsync(Telefone);
-            Pedidos = orders.Select(o => new OrderHistoryDto(o.Id, o.Status, o.CreatedAt, o.Total, o.PaymentMethod)).ToList();
+            Pedidos = orders.Select(o => new OrderHistoryDto(o.Id, o.Status, o.CreatedAt, o.Total, o.PaymentMethod, o.Items)).ToList();
         }
 
         return Page();

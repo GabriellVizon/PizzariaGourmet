@@ -83,16 +83,39 @@
                 <td style="font-family:monospace;font-size:0.8rem">#@o.Id[..6]</td>
                 <td>@o.CustomerName</td>
                 <td><strong>R$ @o.Total.ToString("F2")</strong></td>
-                <td>@o.PaymentMethod</td>
+                <td>
+                  @{
+                    var payLabel = o.PaymentMethod switch
+                    {
+                      "card" => "Cartão",
+                      "pix" => "PIX",
+                      "cash" => "Dinheiro",
+                      _ => o.PaymentMethod
+                    };
+                  }
+                  @payLabel
+                </td>
                 <td style="font-size:0.8rem;white-space:nowrap">@o.CreatedAt</td>
                 <td>
+                  @{
+                    var statLabel = o.Status switch
+                    {
+                      "pending" => "Pendente",
+                      "paid" => "Pago",
+                      "preparing" => "Preparando",
+                      "delivering" => "Saiu pra entrega",
+                      "delivered" => "Entregue",
+                      "cancelled" => "Cancelado",
+                      _ => o.Status
+                    };
+                  }
                   <span style="display:inline-block;padding:2px 10px;border-radius:50px;font-size:0.75rem;font-weight:700;
                     @(o.Status == "paid" ? "background:#27ae60;color:#fff" :
                       o.Status == "pending" ? "background:var(--accent);color:#fff" :
                       o.Status == "delivered" ? "background:var(--brand);color:#fff" :
                       o.Status == "cancelled" ? "background:#e74c3c;color:#fff" :
                       "background:var(--bg);color:var(--text)")">
-                    @o.Status
+                    @statLabel
                   </span>
                 </td>
                 <td>

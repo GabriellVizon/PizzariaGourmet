@@ -44,8 +44,8 @@ function copyOrderNumber() {
 }
 
 const params = new URLSearchParams(window.location.search);
-const sessionId = params.get('session_id');
 const orderId = params.get('order_id');
+const estimatedTime = params.get('estimatedTime') || '60';
 const shortId = orderId ? '#' + orderId.slice(0, 8) : '';
 
 if (shortId) {
@@ -56,45 +56,12 @@ if (shortId) {
   document.getElementById('whatsapp-help-link').href = 'https://wa.me/5524992206707?text=Oi!%20Preciso%20de%20ajuda%20com%20o%20pedido%20' + encodeURIComponent(shortId);
 }
 
-if (sessionId) {
-  (async () => {
-    try {
-      const confirmRes = await fetch('/api/orders/confirm-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId })
-      });
-      const confirmJson = await confirmRes.json();
-      if (confirmJson.confirmed) {
-        document.getElementById('success-message').innerHTML = `
-          Pagamento confirmado com sucesso!<br>
-          Você receberá a confirmação por e-mail.
-        `;
-      } else if (confirmJson.status) {
-        document.getElementById('success-message').innerHTML = `
-          Pagamento em processamento...<br>
-          Status: <strong>${confirmJson.status}</strong>
-        `;
-      } else {
-        document.getElementById('success-message').innerHTML = `
-          Pagamento confirmado!<br>
-          Você receberá a confirmação por e-mail.
-        `;
-      }
-      localStorage.removeItem('cart');
-    } catch (e) {
-      document.getElementById('success-message').innerHTML = `
-        Pagamento confirmado!<br>
-        Você receberá a confirmação por e-mail.
-      `;
-      localStorage.removeItem('cart');
-    }
-  })();
-} else if (orderId) {
+if (orderId) {
   document.getElementById('success-message').innerHTML = `
     Pedido registrado com sucesso!<br>
     Guarde o número do pedido para acompanhar.<br>
-    Pagamento via <strong>PIX</strong> será confirmado manualmente após a transferência.
+    ⏱️ Tempo estimado: <strong>${estimatedTime} minutos</strong><br>
+    O pagamento será confirmado manualmente pelo estabelecimento.
   `;
   localStorage.removeItem('cart');
 } else {

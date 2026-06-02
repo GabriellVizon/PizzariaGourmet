@@ -29,12 +29,15 @@ public class OrderModel : PageModel
     public string CustomerEmail { get; set; } = "";
     public string CustomerAddress { get; set; } = "";
     public string CustomerCPF { get; set; } = "";
+    public string CustomerNotes { get; set; } = "";
     public decimal Subtotal { get; set; }
     public decimal DeliveryFee { get; set; }
     public decimal Total { get; set; }
     public string PaymentMethod { get; set; } = "";
     public string? CouponCode { get; set; }
     public decimal Discount { get; set; }
+    public string? ScheduledTime { get; set; }
+    public string? DeliveryPersonName { get; set; }
     public List<OrderItemDto> Items { get; set; } = new();
 
     public class OrderItemDto
@@ -61,6 +64,9 @@ public class OrderModel : PageModel
         CustomerEmail = order.CustomerEmail;
         CustomerAddress = order.CustomerAddress;
         CustomerCPF = order.CustomerCPF;
+        CustomerNotes = order.CustomerNotes;
+        ScheduledTime = order.ScheduledTime;
+        DeliveryPersonName = order.DeliveryPersonName;
         Subtotal = order.Subtotal;
         DeliveryFee = order.DeliveryFee;
         Total = order.Total;
@@ -136,7 +142,7 @@ public class OrderModel : PageModel
         var oldStatus = order.Status;
         await _orderSvc.UpdateStatusAsync(Id, status);
 
-        if (status == "paid" && oldStatus != "paid")
+        if ((status == "paid" && oldStatus != "paid") || (status == "cancelled" && oldStatus != "cancelled"))
             await _notifySvc.SendNotificationsAsync(Id, order.Items);
 
         // Send WhatsApp to customer on any status change

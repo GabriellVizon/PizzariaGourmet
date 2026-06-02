@@ -33,12 +33,36 @@
           <small style="color:var(--text-light)">DDD + número, apenas dígitos</small>
         </div>
         <div class="form-group">
+          <label for="estimatedTime">Tempo estimado de entrega (minutos)</label>
+          <input id="estimatedTime" name="estimatedTime" type="number" min="1" value="60" />
+          <small style="color:var(--text-light)">Exibido na confirmação do pedido</small>
+        </div>
+        <div class="form-group">
           <label for="pixKey">Chave PIX</label>
           <input id="pixKey" name="pixKey" placeholder="chave@email.com" />
         </div>
         <div class="form-group">
           <label for="storeName">Nome da loja</label>
           <input id="storeName" name="storeName" placeholder="Pizzaria Gourmet" />
+        </div>
+        <div class="form-group">
+          <label for="address">Endereço da loja</label>
+          <input id="address" name="address" placeholder="Rua Exemplo, 123 - Centro" />
+        </div>
+        <div class="form-group">
+          <label for="cnpj">CNPJ</label>
+          <input id="cnpj" name="cnpj" placeholder="00.000.000/0001-00" />
+        </div>
+        <div class="form-group">
+          <label>
+            <input id="allowScheduling" name="allowScheduling" type="checkbox" style="width:auto" />
+            Permitir agendamento de pedidos
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="minScheduleMinutes">Mínimo para agendamento (minutos)</label>
+          <input id="minScheduleMinutes" name="minScheduleMinutes" type="number" min="0" value="60" />
+          <small style="color:var(--text-light)">Tempo mínimo de antecedência para agendar um pedido</small>
         </div>
         <div style="margin-top:16px">
           <button type="submit">Salvar</button>
@@ -59,6 +83,11 @@ async function loadSettings() {
     document.getElementById('whatsapp').value = s.whatsapp || '';
     document.getElementById('pixKey').value = s.pixKey || '';
     document.getElementById('storeName').value = s.storeName || '';
+    document.getElementById('address').value = s.address || '';
+    document.getElementById('cnpj').value = s.cnpj || '';
+    document.getElementById('allowScheduling').checked = s.allowScheduling !== false;
+    document.getElementById('minScheduleMinutes').value = s.minScheduleMinutes || 60;
+    document.getElementById('estimatedTime').value = s.estimatedTime || 60;
   } catch {}
 }
 
@@ -76,7 +105,12 @@ document.getElementById('settings-form').addEventListener('submit', async (e) =>
         freeDeliveryMin: Number(document.getElementById('freeDeliveryMin').value),
         whatsapp: document.getElementById('whatsapp').value,
         pixKey: document.getElementById('pixKey').value,
-        storeName: document.getElementById('storeName').value
+        storeName: document.getElementById('storeName').value,
+        address: document.getElementById('address').value,
+        cnpj: document.getElementById('cnpj').value,
+        allowScheduling: document.getElementById('allowScheduling').checked,
+        minScheduleMinutes: Number(document.getElementById('minScheduleMinutes').value) || 60,
+        estimatedTime: Number(document.getElementById('estimatedTime').value) || 60
       })
     });
     if (r.status === 401) { window.location.href = '/Admin/Login'; return; }

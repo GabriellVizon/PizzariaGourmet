@@ -1,0 +1,113 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@{
+  Layout = "_Layout";
+}
+
+<div class="admin-page">
+  <div class="container" style="max-width:600px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+      <h2 style="margin:0">🕐 Horários de Funcionamento</h2>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">Dashboard</a>
+        <a href="/Admin/Settings" style="color:var(--text-light);font-weight:600;text-decoration:none">Config</a>
+        <a href="/Admin/Logout" style="color:#e74c3c;font-weight:600;text-decoration:none;font-size:0.85rem">Sair</a>
+      </div>
+    </div>
+
+    <div class="admin-panel">
+      <form id="hours-form">
+        <div id="hours-list">Carregando...</div>
+        <div style="margin-top:16px">
+          <button type="submit">Salvar Horários</button>
+          <span id="hours-result" style="margin-left:12px;font-size:0.85rem"></span>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+async function loadHours() {
+  try {
+    const r = await fetch('/api/business-hours');
+    const hours = await r.json();
+    const container = document.getElementById('hours-list');
+    container.innerHTML = hours.map(h => `
+      <div class="form-group" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="min-width:100px;font-weight:600">${DAYS[h.dayOfWeek]}</div>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer;min-width:80px">
+          <input type="checkbox" data-id="${h.id}" name="isOpen_${h.id}" ${h.isOpen ? 'checked' : ''} style="width:auto" />
+          Aberto
+        </label>
+        <div class="form-group" style="margin:0;flex:1;min-width:120px">
+          <label style="font-size:0.75rem">Abertura</label>
+          <input type="time" data-id="${h.id}" name="open_${h.id}" value="${h.openTime}" style="padding:6px 10px" />
+        </div>
+        <div class="form-group" style="margin:0;flex:1;min-width:120px">
+          <label style="font-size:0.75rem">Fechamento</label>
+          <input type="time" data-id="${h.id}" name="close_${h.id}" value="${h.closeTime}" style="padding:6px 10px" />
+        </div>
+      </div>
+    `).join('');
+  } catch { document.getElementById('hours-list').innerHTML = 'Erro ao carregar'; }
+}
+
+document.getElementById('hours-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
+  const result = document.getElementById('hours-result');
+  const rows = document.querySelectorAll('[data-id]');
+  const hours = [];
+  const seen = new Set();
+  rows.forEach(el => {
+    const id = Number(el.dataset.id);
+    if (seen.has(id)) return;
+    seen.add(id);
+    hours.push({
+      id,
+      dayOfWeek: parseInt(el.closest('.form-group')?.querySelector('[data-id]')?.dataset?.id) || 0,
+      openTime: document.querySelector(`[name="open_${id}"]`)?.value || '18:00',
+      closeTime: document.querySelector(`[name="close_${id}"]`)?.value || '23:59',
+      isOpen: document.querySelector(`[name="isOpen_${id}"]`)?.checked || false
+    });
+  });
+  // Rebuild with proper dayOfWeek from order
+  const allHours = [];
+  document.querySelectorAll('#hours-list > .form-group').forEach(group => {
+    const checkbox = group.querySelector('input[type="checkbox"]');
+    if (!checkbox) return;
+    const id = Number(checkbox.dataset.id);
+    const openInput = group.querySelector(`[name="open_${id}"]`);
+    const closeInput = group.querySelector(`[name="close_${id}"]`);
+    allHours.push({
+      id,
+      dayOfWeek: id,
+      openTime: openInput?.value || '18:00',
+      closeTime: closeInput?.value || '23:59',
+      isOpen: checkbox.checked
+    });
+  });
+  try {
+    const r = await fetch('/api/business-hours', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(allHours)
+    });
+    if (r.status === 401) { window.location.href = '/Admin/Login'; return; }
+    result.textContent = '✓ Salvo!';
+    result.style.color = '#27ae60';
+  } catch {
+    result.textContent = '✕ Erro ao salvar';
+    result.style.color = 'var(--brand)';
+  }
+  btn.disabled = false;
+  setTimeout(() => result.textContent = '', 3000);
+});
+
+loadHours();
+</script>

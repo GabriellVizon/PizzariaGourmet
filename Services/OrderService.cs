@@ -113,4 +113,40 @@ public class OrderService
         _logger.LogInformation("Order {OrderId} deleted", id);
         return true;
     }
+
+    public async Task<List<Order>> GetByCustomerIdAsync(int customerId)
+    {
+        return await _db.Orders
+            .Where(o => o.CustomerId == customerId)
+            .OrderByDescending(o => o.CreatedAt)
+            .Take(20)
+            .ToListAsync();
+    }
+
+    public async Task AssignDeliveryPersonAsync(string orderId, int personId, string personName)
+    {
+        var order = await _db.Orders.FindAsync(orderId);
+        if (order == null) return;
+        order.DeliveryPersonId = personId;
+        order.DeliveryPersonName = personName;
+        await _db.SaveChangesAsync();
+        _logger.LogInformation("Order {OrderId} assigned to delivery person {PersonName}", orderId, personName);
+    }
+
+    public async Task<List<Order>> GetUnprintedOrdersAsync()
+    {
+        return await _db.Orders
+            .Where(o => !o.Printed && o.Status != "cancelled")
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task MarkPrintedAsync(string orderId)
+    {
+        var order = await _db.Orders.FindAsync(orderId);
+        if (order == null) return;
+        order.Printed = true;
+        order.PrintedAt = DateTime.UtcNow.ToString("o");
+        await _db.SaveChangesAsync();
+    }
 }

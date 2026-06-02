@@ -20,9 +20,14 @@
             </div>
           </div>
             <div class="form-group">
-              <label for="email">E-mail (para receber confirmação)</label>
-              <input id="email" name="email" type="email" required placeholder="seu@email.com" />
+              <label for="email">E-mail <span style="color:var(--text-light);font-weight:400">(opcional)</span></label>
+              <input id="email" name="email" type="email" placeholder="seu@email.com" />
             </div>
+            <div class="form-group">
+              <label for="cep">CEP <span style="color:var(--text-light);font-weight:400">(para verificar área de entrega)</span></label>
+              <input id="cep" name="cep" placeholder="00000-000" maxlength="9" />
+            </div>
+            <div id="cep-validation" style="font-size:0.85rem;margin-bottom:8px;display:none"></div>
             <div class="form-group">
               <label for="address">Endereço de entrega</label>
             <input id="address" name="address" required placeholder="Rua, número, bairro, complemento" />
@@ -34,6 +39,24 @@
           <div class="form-group">
             <label for="notes">Observações</label>
             <textarea id="notes" name="notes" placeholder="Alguma observação? Ex: sem cebola, ponto da massa..."></textarea>
+          </div>
+
+          <div id="store-status" style="margin-bottom:16px"></div>
+
+          <div id="scheduling-section" style="margin-bottom:16px;display:none">
+            <h2>📅 Agendamento</h2>
+            <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:8px">Agende seu pedido para receber no horário desejado:</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="schedule-date">Data</label>
+                <input id="schedule-date" type="date" />
+              </div>
+              <div class="form-group">
+                <label for="schedule-time">Horário</label>
+                <input id="schedule-time" type="time" />
+              </div>
+            </div>
+            <small style="color:var(--text-light)">Deixe em branco para entrega imediata.</small>
           </div>
 
           <h2 style="margin-top:32px">💳 Pagamento</h2>
@@ -55,10 +78,10 @@
 
           <div class="payment-detail payment-detail-card" id="payment-detail-card">
             <div class="card-info-box">
-              <div class="card-info-icon">🔒</div>
+              <div class="card-info-icon">💳</div>
               <div class="card-info-text">
-                <strong>Pagamento seguro via Stripe</strong>
-                <p style="margin:4px 0 0;font-size:0.85rem">Você será redirecionado para o ambiente seguro do Stripe para finalizar o pagamento com cartão de crédito.</p>
+                <strong>Cartão de Crédito</strong>
+                <p style="margin:4px 0 0;font-size:0.85rem">Pagamento na entrega (maquininha). Seu pedido será registrado e o pagamento será coletado no momento da entrega.</p>
               </div>
             </div>
           </div>
@@ -212,6 +235,75 @@ function renderCheckoutSummary() {
     });
   });
 
+  // Store status check
+  async function checkStoreStatus() {
+    try {
+      const r = await fetch('/api/business-hours/check');
+      const data = await r.json();
+      const el = document.getElementById('store-status');
+      if (data.isOpen) {
+        el.innerHTML = `<div style="padding:8px 12px;background:#e8f5e9;border-radius:8px;font-size:0.85rem;color:#2e7d32;font-weight:600">🟢 Loja aberta — Funcionamento: ${data.openTime} às ${data.closeTime}</div>`;
+      } else {
+        el.innerHTML = `<div style="padding:8px 12px;background:#fde8e8;border-radius:8px;font-size:0.85rem;color:#c62828;font-weight:600">
+          🔴 Loja fechada — Horário: ${data.openTime || '—'} às ${data.closeTime || '—'}<br>
+          <span style="font-weight:400">Você pode agendar um pedido para outro horário abaixo.</span>
+        </div>`;
+        document.getElementById('scheduling-section').style.display = 'block';
+      }
+      if (data.isOpen) {
+        const settingsRes = await fetch('/api/settings');
+        const settingsData = await settingsRes.json();
+        if (settingsData.allowScheduling !== false) {
+          document.getElementById('scheduling-section').style.display = 'block';
+        }
+      }
+    } catch {}
+  }
+
+  // Set min date for scheduling
+  const dateInput = document.getElementById('schedule-date');
+  if (dateInput) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dateInput.min = tomorrow.toISOString().split('T')[0];
+  }
+
+  checkStoreStatus();
+
+  // CEP auto-format and validation
+  const cepInput = document.getElementById('cep');
+  if (cepInput) {
+    cepInput.addEventListener('input', (e) => {
+      let val = e.target.value.replace(/\D/g, '');
+      if (val.length > 5) val = val.slice(0, 5) + '-' + val.slice(5, 8);
+      e.target.value = val;
+    });
+
+    cepInput.addEventListener('blur', async (e) => {
+      const cep = e.target.value.replace(/\D/g, '');
+      const el = document.getElementById('cep-validation');
+      if (cep.length === 8) {
+        try {
+          const r = await fetch(`/api/delivery-areas/check-cep?cep=${cep}`);
+          const data = await r.json();
+          if (data.valid) {
+            el.style.display = 'block';
+            el.style.color = '#27ae60';
+            el.textContent = `✓ ${data.areaName} — Frete: R$ ${data.deliveryFee.toFixed(2)}${data.estimatedTime ? ` | Entrega estimada: ${data.estimatedTime} min` : ''}`;
+          } else {
+            el.style.display = 'block';
+            el.style.color = '#e74c3c';
+            el.textContent = data.areaName ? `✓ ${data.areaName}` : '⚠️ CEP não atendido. Verifique se entregamos no seu endereço.';
+          }
+        } catch {
+          el.style.display = 'none';
+        }
+      } else {
+        el.style.display = 'none';
+      }
+    });
+  }
+
   function getTotal() {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const subtotal = cart.reduce((s, i) => s + getItemTotal(i), 0);
@@ -336,18 +428,27 @@ document.getElementById('checkout-form').addEventListener('submit', async (e) =>
     return;
   }
 
+  const scheduleDate = document.getElementById('schedule-date')?.value;
+  const scheduleTime = document.getElementById('schedule-time')?.value;
+  let scheduledTime = null;
+  if (scheduleDate && scheduleTime) {
+    scheduledTime = scheduleDate + 'T' + scheduleTime + ':00';
+  }
+
   const payload = {
     customer: {
       name: data.get('name'),
       phone: data.get('phone'),
       email: data.get('email'),
+      cep: data.get('cep'),
       address: data.get('address'),
       cpf: data.get('cpf'),
       notes: data.get('notes')
     },
     paymentMethod: data.get('paymentMethod') || 'card',
     cart: cart,
-    couponCode: appliedCoupon ? appliedCoupon.code : null
+    couponCode: appliedCoupon ? appliedCoupon.code : null,
+    scheduledTime: scheduledTime
   };
 
   try {
@@ -359,6 +460,11 @@ document.getElementById('checkout-form').addEventListener('submit', async (e) =>
     const json = await res.json();
     if (json?.url) {
       window.location = json.url;
+    } else if (json?.storeClosed) {
+      document.getElementById('checkout-result').innerHTML =
+        `<div style="color:#c62828;padding:16px;background:#fde8e8;border-radius:8px;font-weight:600">🔴 ${json.error}<br><span style="font-weight:400;font-size:0.9rem">Você pode agendar um pedido preenchendo a data e horário acima.</span></div>`;
+      btn.textContent = 'Confirmar Pedido →';
+      btn.disabled = false;
     } else {
       document.getElementById('checkout-result').innerHTML =
         `<div style="color:var(--brand);padding:12px;background:var(--bg);border-radius:8px">${json.error || 'Erro ao processar pedido'}</div>`;

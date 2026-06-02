@@ -2,11 +2,10 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
-using Stripe;
-using Stripe.Checkout;
 using PizzariaGourmet.Data;
 using PizzariaGourmet.Models;
 using PizzariaGourmet.Services;
+using System.Text.RegularExpressions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +43,9 @@ builder.Services.AddScoped<PizzariaGourmet.Services.NotificationService>();
 builder.Services.AddScoped<PizzariaGourmet.Services.ComplementService>();
 builder.Services.AddScoped<PizzariaGourmet.Services.CouponService>();
 builder.Services.AddScoped<PizzariaGourmet.Services.WhatsAppService>();
+builder.Services.AddScoped<PizzariaGourmet.Services.CustomerService>();
+builder.Services.AddScoped<PizzariaGourmet.Services.DeliveryService>();
+builder.Services.AddScoped<PizzariaGourmet.Services.ReportService>();
 
 builder.Services.AddRazorPages();
 
@@ -58,6 +60,24 @@ using (var scope = app.Services.CreateScope())
     try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN Discount TEXT DEFAULT 0"); } catch { }
     try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN CouponCode TEXT"); } catch { }
     try { await db.Database.ExecuteSqlRawAsync("CREATE TABLE IF NOT EXISTS Coupons (Id INTEGER PRIMARY KEY, Code TEXT NOT NULL UNIQUE, DiscountType TEXT NOT NULL DEFAULT 'percentage', DiscountValue TEXT NOT NULL DEFAULT 0, MinOrder TEXT NOT NULL DEFAULT 0, ExpiresAt TEXT, MaxUses INTEGER NOT NULL DEFAULT 0, UsedCount INTEGER NOT NULL DEFAULT 0, IsActive INTEGER NOT NULL DEFAULT 1)"); } catch { }
+    try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN ScheduledTime TEXT"); } catch { }
+    try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN DeliveryPersonId INTEGER"); } catch { }
+    try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN DeliveryPersonName TEXT"); } catch { }
+    try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN CustomerId INTEGER"); } catch { }
+    try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN Printed INTEGER DEFAULT 0"); } catch { }
+    try { await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN PrintedAt TEXT"); } catch { }
+    try { await db.Database.ExecuteSqlRawAsync("CREATE TABLE IF NOT EXISTS BusinessHours (Id INTEGER PRIMARY KEY, DayOfWeek INTEGER NOT NULL, OpenTime TEXT NOT NULL DEFAULT '18:00', CloseTime TEXT NOT NULL DEFAULT '23:59', IsOpen INTEGER NOT NULL DEFAULT 1)"); } catch { }
+    try { await db.Database.ExecuteSqlRawAsync("CREATE TABLE IF NOT EXISTS DeliveryAreas (Id INTEGER PRIMARY KEY, Name TEXT NOT NULL, CepStart TEXT DEFAULT '', CepEnd TEXT DEFAULT '', Neighborhood TEXT DEFAULT '', DeliveryFee TEXT NOT NULL DEFAULT 5.00, MinOrder TEXT NOT NULL DEFAULT 0, EstimatedTime INTEGER NOT NULL DEFAULT 60, IsActive INTEGER NOT NULL DEFAULT 1)"); } catch { }
+    try { await db.Database.ExecuteSqlRawAsync("CREATE TABLE IF NOT EXISTS DeliveryPersons (Id INTEGER PRIMARY KEY, Name TEXT NOT NULL, Phone TEXT DEFAULT '', Vehicle TEXT DEFAULT '', IsAvailable INTEGER NOT NULL DEFAULT 1, IsActive INTEGER NOT NULL DEFAULT 1, CreatedAt TEXT NOT NULL)"); } catch { }
+    try { await db.Database.ExecuteSqlRawAsync("CREATE TABLE IF NOT EXISTS Customers (Id INTEGER PRIMARY KEY, Name TEXT NOT NULL, Phone TEXT DEFAULT '', Email TEXT DEFAULT '', Address TEXT DEFAULT '', Cpf TEXT DEFAULT '', TotalOrders INTEGER NOT NULL DEFAULT 0, TotalSpent TEXT NOT NULL DEFAULT 0, FirstOrderAt TEXT, LastOrderAt TEXT, Notes TEXT DEFAULT '', CreatedAt TEXT NOT NULL)"); } catch { }
+
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    string[] roles = { "Admin", "Cozinha", "Atendente" };
+    foreach (var roleName in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+            await roleManager.CreateAsync(new IdentityRole(roleName));
+    }
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
     var adminEmail = app.Configuration["Admin:Email"] ?? "admin@pizzariagourmet.com";
@@ -67,6 +87,7 @@ using (var scope = app.Services.CreateScope())
     {
         var admin = new IdentityUser { UserName = adminEmail, Email = adminEmail };
         await userManager.CreateAsync(admin, adminPass);
+        await userManager.AddToRoleAsync(admin, "Admin");
     }
 
     if (!await db.Products.AnyAsync())
@@ -96,6 +117,21 @@ using (var scope = app.Services.CreateScope())
             new PizzariaGourmet.Models.Complement { Name = "Pepperoni Extra", Price = 4.50m, Available = true },
             new PizzariaGourmet.Models.Complement { Name = "Chocolate", Price = 5.00m, Available = true }
         );
+        await db.SaveChangesAsync();
+    }
+
+    if (!await db.BusinessHours.AnyAsync())
+    {
+        for (int d = 0; d < 7; d++)
+        {
+            db.BusinessHours.Add(new PizzariaGourmet.Models.BusinessHours
+            {
+                DayOfWeek = d,
+                OpenTime = d == 0 ? "18:00" : "17:00",
+                CloseTime = "23:59",
+                IsOpen = d != 1
+            });
+        }
         await db.SaveChangesAsync();
     }
 }
@@ -145,7 +181,12 @@ app.MapGet("/api/settings", () =>
             freeDeliveryMin = 50.00,
             whatsapp = "5524992206707",
             pixKey = "contato@pizzariagourmet.com",
-            storeName = "Pizzaria Gourmet"
+            storeName = "Pizzaria Gourmet",
+            address = "Rua Exemplo, 123 - Centro",
+            cnpj = "00.000.000/0001-00",
+            allowScheduling = true,
+            minScheduleMinutes = 60,
+            estimatedTime = 60
         });
     var json = System.IO.File.ReadAllText(settingsPath);
     return Results.Content(json, "application/json");
@@ -242,9 +283,8 @@ app.MapDelete("/api/complements/{id:int}", async (int id, PizzariaGourmet.Servic
     return ok ? Results.Ok() : Results.NotFound();
 }).RequireAuthorization();
 
-app.MapPost("/create-checkout-session", async (HttpRequest req, OrderService orderSvc, NotificationService notifySvc, PizzariaGourmet.Services.CouponService couponSvc, WhatsAppService whatsAppSvc, ILogger<Program> logger) =>
+app.MapPost("/create-checkout-session", async (HttpRequest req, OrderService orderSvc, NotificationService notifySvc, PizzariaGourmet.Services.CouponService couponSvc, WhatsAppService whatsAppSvc, PizzariaGourmet.Services.CustomerService customerSvc, DeliveryService deliverySvc, ILogger<Program> logger) =>
 {
-    var stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_KEY");
     var domain = Environment.GetEnvironmentVariable("DOMAIN") ?? "http://localhost:5000";
 
     using var sr = new StreamReader(req.Body);
@@ -254,9 +294,19 @@ app.MapPost("/create-checkout-session", async (HttpRequest req, OrderService ord
     if (!doc.RootElement.TryGetProperty("cart", out var cartEl) || cartEl.ValueKind != JsonValueKind.Array)
         return Results.BadRequest(new { error = "Cart missing" });
 
+    // Check if store is open
+    var hours = await deliverySvc.GetAllHoursAsync();
+    if (!deliverySvc.IsOpenNow(hours))
+    {
+        var isScheduled = doc.RootElement.TryGetProperty("scheduledTime", out var st) && !string.IsNullOrEmpty(st.GetString());
+        if (!isScheduled)
+            return Results.BadRequest(new { error = "Loja fechada. Você pode agendar um pedido para outro horário.", storeClosed = true });
+    }
+
     var customer = doc.RootElement.TryGetProperty("customer", out var c) ? c : default;
     var paymentMethod = doc.RootElement.TryGetProperty("paymentMethod", out var pm) ? pm.GetString() ?? "card" : "card";
     var couponCode = doc.RootElement.TryGetProperty("couponCode", out var cc) ? cc.GetString() : null;
+    var scheduledTime = doc.RootElement.TryGetProperty("scheduledTime", out var sch) ? sch.GetString() : null;
 
     decimal subtotal = 0;
     decimal baseSubtotal = 0;
@@ -307,17 +357,54 @@ app.MapPost("/create-checkout-session", async (HttpRequest req, OrderService ord
 
     var total = Math.Max(0, subtotal + finalDeliveryFee - discount);
 
+    // Find or create customer
+    var custName = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
+    var custPhone = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("phone", out var ph) ? ph.GetString() ?? "" : "";
+    var custEmail = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("email", out var em) ? em.GetString() ?? "" : "";
+    var custCEP = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("cep", out var cepEl) ? cepEl.GetString() ?? "" : "";
+    var custAddress = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("address", out var a) ? a.GetString() ?? "" : "";
+    var custCPF = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("cpf", out var cpf) ? cpf.GetString() ?? "" : "";
+    var custNotes = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("notes", out var notes) ? notes.GetString() ?? "" : "";
+
+    // Validate CEP against delivery areas if configured
+    var cepDigits = new string(custCEP?.Where(char.IsDigit).ToArray() ?? []);
+    if (cepDigits.Length == 8)
+    {
+        var areas = await deliverySvc.GetAllAreasAsync();
+        if (areas.Count > 0)
+        {
+            var matched = areas.Any(a =>
+            {
+                if (string.IsNullOrEmpty(a.CepStart) || string.IsNullOrEmpty(a.CepEnd)) return false;
+                var start = new string(a.CepStart.Where(char.IsDigit).ToArray());
+                var end = new string(a.CepEnd.Where(char.IsDigit).ToArray());
+                if (start.Length != 8 || end.Length != 8) return false;
+                return string.Compare(cepDigits, start) >= 0 && string.Compare(cepDigits, end) <= 0;
+            });
+            if (!matched)
+                return Results.BadRequest(new { error = "Infelizmente não entregamos no CEP informado." });
+        }
+    }
+
+    // Append CEP to address if provided
+    if (!string.IsNullOrEmpty(custCEP))
+        custAddress = custAddress + (string.IsNullOrEmpty(custAddress) ? "" : " - ") + "CEP: " + custCEP;
+
+    var customerRecord = await customerSvc.FindOrCreateAsync(custName, custPhone, custEmail, custAddress, custCPF);
+
     var order = new Order
     {
-        CustomerName = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "",
-        CustomerPhone = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("phone", out var ph) ? ph.GetString() ?? "" : "",
-        CustomerEmail = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("email", out var em) ? em.GetString() ?? "" : "",
-        CustomerAddress = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("address", out var a) ? a.GetString() ?? "" : "",
-        CustomerCPF = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("cpf", out var cpf) ? cpf.GetString() ?? "" : "",
-        CustomerNotes = customer.ValueKind == JsonValueKind.Object && customer.TryGetProperty("notes", out var notes) ? notes.GetString() ?? "" : "",
+        CustomerName = custName,
+        CustomerPhone = custPhone,
+        CustomerEmail = custEmail,
+        CustomerAddress = custAddress,
+        CustomerCPF = custCPF,
+        CustomerNotes = custNotes,
+        CustomerId = customerRecord.Id,
+        ScheduledTime = scheduledTime,
         Items = body,
         Status = "pending",
-        PaymentMethod = paymentMethod == "stripe" ? "stripe" : paymentMethod,
+        PaymentMethod = paymentMethod,
         Subtotal = subtotal,
         DeliveryFee = finalDeliveryFee,
         Discount = discount,
@@ -326,6 +413,7 @@ app.MapPost("/create-checkout-session", async (HttpRequest req, OrderService ord
     };
 
     await orderSvc.CreateAsync(order);
+    await customerSvc.RecordOrderAsync(customerRecord.Id, total);
 
     // Build a simple order summary for email
     var orderSummaryHtml = "";
@@ -377,83 +465,20 @@ app.MapPost("/create-checkout-session", async (HttpRequest req, OrderService ord
         _ = whatsAppSvc.SendStatusUpdateAsync(order.CustomerPhone, order.CustomerName, order.Id, order.Status, domain);
     }
 
-    // For Pix or Cash, send the order directly without Stripe
-    if (paymentMethod != "card")
-    {
-        logger.LogInformation("Order {OrderId} created with payment method {Method}", order.Id, paymentMethod);
-        return Results.Json(new { url = domain + "/Success?order_id=" + order.Id, id = order.Id, orderId = order.Id });
-    }
-
-    // Stripe Checkout for card payments
-    if (string.IsNullOrEmpty(stripeKey))
-        return Results.BadRequest(new { error = "STRIPE_API_KEY not configured" });
-
-    StripeConfiguration.ApiKey = stripeKey;
-
-    var options = new SessionCreateOptions
-    {
-        PaymentMethodTypes = new List<string> { "card" },
-        Mode = "payment",
-        SuccessUrl = domain + "/Success?session_id={CHECKOUT_SESSION_ID}",
-        CancelUrl = domain + "/Checkout",
-        LineItems = new List<SessionLineItemOptions>(),
-        ClientReferenceId = order.Id
-    };
-
-    foreach (var item in cartEl.EnumerateArray())
-    {
-        var itemName = item.GetProperty("name").GetString() ?? "Item";
-        var itemPrice = item.GetProperty("price").GetDecimal();
-
-        if (item.TryGetProperty("complements", out var compsEl) && compsEl.ValueKind == JsonValueKind.Array)
-        {
-            var compNames = new List<string>();
-            foreach (var comp in compsEl.EnumerateArray())
-            {
-                compNames.Add(comp.GetProperty("name").GetString() ?? "");
-                itemPrice += comp.GetProperty("price").GetDecimal();
-            }
-            if (compNames.Count > 0)
-                itemName += " (+" + string.Join(", ", compNames) + ")";
-        }
-
-        options.LineItems.Add(new SessionLineItemOptions
-        {
-            PriceData = new SessionLineItemPriceDataOptions
-            {
-                UnitAmount = (long)(itemPrice * 100),
-                Currency = "brl",
-                ProductData = new SessionLineItemPriceDataProductDataOptions
-                {
-                    Name = itemName
-                }
-            },
-            Quantity = item.GetProperty("qty").GetInt32()
-        });
-    }
-
-    var sessionService = new SessionService();
-    var session = await sessionService.CreateAsync(options);
-
-    return Results.Json(new { url = session.Url, id = session.Id, orderId = order.Id });
-});
-
-app.MapGet("/session/{id}", async (string id, ILogger<Program> logger) =>
-{
-    var stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_KEY");
-    if (string.IsNullOrEmpty(stripeKey))
-        return Results.BadRequest(new { error = "STRIPE_API_KEY not configured" });
-    StripeConfiguration.ApiKey = stripeKey;
+    var estimatedTime = 60;
     try
     {
-        var session = await new SessionService().GetAsync(id);
-        return Results.Json(session);
+        if (System.IO.File.Exists(settingsPath))
+        {
+            var settingsDoc = JsonDocument.Parse(System.IO.File.ReadAllText(settingsPath));
+            if (settingsDoc.RootElement.TryGetProperty("estimatedTime", out var et))
+                estimatedTime = et.GetInt32();
+        }
     }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Failed to retrieve Stripe session {SessionId}", id);
-        return Results.BadRequest(new { error = "Failed to retrieve session" });
-    }
+    catch { }
+
+    logger.LogInformation("Order {OrderId} created with payment method {Method}", order.Id, paymentMethod);
+    return Results.Json(new { url = $"{domain}/Success?order_id={order.Id}&estimatedTime={estimatedTime}", id = order.Id, orderId = order.Id });
 });
 
 // Image upload endpoint
@@ -553,126 +578,178 @@ app.MapDelete("/api/coupons/{id:int}", async (int id, PizzariaGourmet.Services.C
     return ok ? Results.Ok() : Results.NotFound();
 }).RequireAuthorization();
 
-// Confirm payment after Stripe redirect (fallback when webhook is not configured)
-app.MapPost("/api/orders/confirm-payment", async (HttpRequest req, OrderService orderSvc, NotificationService notifySvc, ILogger<Program> logger) =>
+// Business hours check
+app.MapGet("/api/business-hours/check", async (DeliveryService deliverySvc) =>
 {
-    var stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_KEY");
-    if (string.IsNullOrEmpty(stripeKey))
-        return Results.BadRequest(new { error = "STRIPE_API_KEY not configured" });
-    StripeConfiguration.ApiKey = stripeKey;
+    var hours = await deliverySvc.GetAllHoursAsync();
+    var isOpen = deliverySvc.IsOpenNow(hours);
+    var now = DateTime.Now;
+    var dayOfWeek = (int)now.DayOfWeek;
+    var today = hours.FirstOrDefault(h => h.DayOfWeek == dayOfWeek);
+    return Results.Json(new
+    {
+        isOpen,
+        currentTime = now.ToString("HH:mm"),
+        openTime = today?.OpenTime,
+        closeTime = today?.CloseTime,
+        dayName = now.DayOfWeek.ToString()
+    });
+});
 
+// Business Hours CRUD
+app.MapGet("/api/business-hours", async (DeliveryService svc) =>
+    Results.Json(await svc.GetAllHoursAsync()));
+
+app.MapPut("/api/business-hours", async (HttpRequest req, DeliveryService svc) =>
+{
+    var hours = await JsonSerializer.DeserializeAsync<List<BusinessHours>>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (hours == null) return Results.BadRequest();
+    await svc.UpdateHoursAsync(hours);
+    return Results.Ok();
+}).RequireAuthorization();
+
+// Delivery Areas CRUD
+app.MapGet("/api/delivery-areas", async (DeliveryService svc) =>
+    Results.Json(await svc.GetAllAreasAsync()));
+
+app.MapGet("/api/delivery-areas/{id:int}", async (int id, DeliveryService svc) =>
+{
+    var a = await svc.GetAreaByIdAsync(id);
+    return a is null ? Results.NotFound() : Results.Json(a);
+});
+
+app.MapPost("/api/delivery-areas", async (HttpRequest req, DeliveryService svc) =>
+{
+    var area = await JsonSerializer.DeserializeAsync<DeliveryArea>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (area == null) return Results.BadRequest();
+    var created = await svc.CreateAreaAsync(area);
+    return Results.Created($"/api/delivery-areas/{created.Id}", created);
+}).RequireAuthorization();
+
+app.MapPut("/api/delivery-areas/{id:int}", async (int id, HttpRequest req, DeliveryService svc) =>
+{
+    var area = await JsonSerializer.DeserializeAsync<DeliveryArea>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (area == null) return Results.BadRequest();
+    var updated = await svc.UpdateAreaAsync(id, area);
+    return updated is null ? Results.NotFound() : Results.Json(updated);
+}).RequireAuthorization();
+
+app.MapDelete("/api/delivery-areas/{id:int}", async (int id, DeliveryService svc) =>
+{
+    var ok = await svc.DeleteAreaAsync(id);
+    return ok ? Results.Ok() : Results.NotFound();
+}).RequireAuthorization();
+
+// Check CEP against delivery areas
+app.MapGet("/api/delivery-areas/check-cep", async (string cep, DeliveryService svc) =>
+{
+    var digits = new string(cep?.Where(char.IsDigit).ToArray() ?? []);
+    if (digits.Length != 8)
+        return Results.Json(new { valid = false });
+
+    var areas = await svc.GetAllAreasAsync();
+    var matched = areas.FirstOrDefault(a =>
+    {
+        if (string.IsNullOrEmpty(a.CepStart) || string.IsNullOrEmpty(a.CepEnd))
+            return false;
+        var start = new string(a.CepStart.Where(char.IsDigit).ToArray());
+        var end = new string(a.CepEnd.Where(char.IsDigit).ToArray());
+        if (start.Length != 8 || end.Length != 8) return false;
+        return string.Compare(digits, start) >= 0 && string.Compare(digits, end) <= 0;
+    });
+
+    if (matched != null)
+        return Results.Json(new { valid = true, areaName = matched.Name, deliveryFee = matched.DeliveryFee, estimatedTime = matched.EstimatedTime, minOrder = matched.MinOrder });
+    else
+        return Results.Json(new { valid = false });
+});
+
+// Delivery Persons CRUD
+app.MapGet("/api/delivery-persons", async (DeliveryService svc) =>
+    Results.Json(await svc.GetAllPersonsAsync()));
+
+app.MapGet("/api/delivery-persons/available", async (DeliveryService svc) =>
+    Results.Json(await svc.GetAvailablePersonsAsync()));
+
+app.MapGet("/api/delivery-persons/{id:int}", async (int id, DeliveryService svc) =>
+{
+    var p = await svc.GetPersonByIdAsync(id);
+    return p is null ? Results.NotFound() : Results.Json(p);
+});
+
+app.MapPost("/api/delivery-persons", async (HttpRequest req, DeliveryService svc) =>
+{
+    var person = await JsonSerializer.DeserializeAsync<DeliveryPerson>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (person == null) return Results.BadRequest();
+    var created = await svc.CreatePersonAsync(person);
+    return Results.Created($"/api/delivery-persons/{created.Id}", created);
+}).RequireAuthorization();
+
+app.MapPut("/api/delivery-persons/{id:int}", async (int id, HttpRequest req, DeliveryService svc) =>
+{
+    var person = await JsonSerializer.DeserializeAsync<DeliveryPerson>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    if (person == null) return Results.BadRequest();
+    var updated = await svc.UpdatePersonAsync(id, person);
+    return updated is null ? Results.NotFound() : Results.Json(updated);
+}).RequireAuthorization();
+
+app.MapDelete("/api/delivery-persons/{id:int}", async (int id, DeliveryService svc) =>
+{
+    var ok = await svc.DeletePersonAsync(id);
+    return ok ? Results.Ok() : Results.NotFound();
+}).RequireAuthorization();
+
+// Customers CRUD
+app.MapGet("/api/customers", async (PizzariaGourmet.Services.CustomerService svc) =>
+    Results.Json(await svc.GetAllAsync()));
+
+app.MapGet("/api/customers/search", async (string? name, string? phone, PizzariaGourmet.Services.CustomerService svc) =>
+    Results.Json(await svc.SearchAsync(name, phone)));
+
+app.MapGet("/api/customers/{id:int}", async (int id, PizzariaGourmet.Services.CustomerService svc) =>
+{
+    var c = await svc.GetByIdAsync(id);
+    return c is null ? Results.NotFound() : Results.Json(c);
+});
+
+app.MapGet("/api/customers/{id:int}/orders", async (int id, OrderService orderSvc) =>
+    Results.Json(await orderSvc.GetByCustomerIdAsync(id)));
+
+app.MapPut("/api/customers/{id:int}/notes", async (int id, HttpRequest req, PizzariaGourmet.Services.CustomerService svc) =>
+{
     using var sr = new StreamReader(req.Body);
     var body = await sr.ReadToEndAsync();
-    var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(body) ? "{}" : body);
+    var doc = JsonDocument.Parse(body);
+    var notes = doc.RootElement.TryGetProperty("notes", out var n) ? n.GetString() ?? "" : "";
+    await svc.UpdateNotesAsync(id, notes);
+    return Results.Ok();
+}).RequireAuthorization();
 
-    if (!doc.RootElement.TryGetProperty("session_id", out var sessionIdEl))
-        return Results.BadRequest(new { error = "session_id required" });
+// Reports
+app.MapGet("/api/reports", async (DateTime? dateFrom, DateTime? dateTo, ReportService svc) =>
+    Results.Json(await svc.GetReportAsync(dateFrom, dateTo))).RequireAuthorization();
 
-    var sessionId = sessionIdEl.GetString();
-    if (string.IsNullOrEmpty(sessionId))
-        return Results.BadRequest(new { error = "session_id required" });
+// Kitchen print queue
+app.MapGet("/api/kitchen/orders", async (OrderService orderSvc) =>
+    Results.Json(await orderSvc.GetUnprintedOrdersAsync())).RequireAuthorization();
 
-    try
-    {
-        var session = await new SessionService().GetAsync(sessionId);
-        if (session.PaymentStatus != "paid" && session.PaymentStatus != "completed")
-            return Results.Json(new { confirmed = false, status = session.PaymentStatus });
-
-        var orderId = session.ClientReferenceId;
-        if (string.IsNullOrEmpty(orderId))
-            return Results.BadRequest(new { error = "No order linked to this session" });
-
-        var order = await orderSvc.GetByIdAsync(orderId);
-        if (order == null)
-            return Results.NotFound(new { error = "Order not found" });
-
-        if (order.Status != "paid")
-        {
-            await orderSvc.UpdateStatusAsync(orderId, "paid");
-            _ = notifySvc.SendNotificationsAsync(orderId, order.Items);
-            logger.LogInformation("Order {OrderId} confirmed via confirm-payment endpoint (session {SessionId})", orderId, sessionId);
-        }
-
-        return Results.Json(new { confirmed = true, orderId });
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Failed to confirm payment for session {SessionId}", sessionId);
-        return Results.BadRequest(new { error = "Failed to confirm payment" });
-    }
-});
-
-app.MapPost("/webhook", async (HttpRequest req, OrderService orderSvc, NotificationService notifySvc, ILogger<Program> logger) =>
+app.MapPost("/api/kitchen/print/{orderId}", async (string orderId, OrderService orderSvc) =>
 {
-    var json = await new StreamReader(req.Body).ReadToEndAsync();
-    var sigHeader = req.Headers["Stripe-Signature"].FirstOrDefault();
-    var webhookSecret = Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET");
+    await orderSvc.MarkPrintedAsync(orderId);
+    return Results.Ok();
+}).RequireAuthorization();
 
-    if (string.IsNullOrEmpty(webhookSecret))
-    {
-        logger.LogWarning("STRIPE_WEBHOOK_SECRET not set — webhook skipped. Orders paid via card will stay 'pending' until manually updated.");
-        return Results.Ok();
-    }
-
-    try
-    {
-        var stripeEvent = EventUtility.ConstructEvent(json, sigHeader, webhookSecret);
-        if (stripeEvent.Type == "checkout.session.completed")
-        {
-            var session = stripeEvent.Data.Object as Session;
-            var orderId = session?.ClientReferenceId;
-            if (!string.IsNullOrEmpty(orderId))
-            {
-                await orderSvc.UpdateStatusAsync(orderId, "paid");
-                var order = await orderSvc.GetByIdAsync(orderId);
-                if (order != null)
-                    await notifySvc.SendNotificationsAsync(orderId, order.Items);
-            }
-        }
-        return Results.Ok();
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Stripe webhook processing failed");
-        return Results.BadRequest();
-    }
-});
-
-// Startup config validation
-app.Lifetime.ApplicationStarted.Register(() =>
+// Assign delivery person to order
+app.MapPost("/api/orders/{orderId}/assign", async (string orderId, HttpRequest req, OrderService orderSvc) =>
 {
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    var stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_KEY");
-    var stripeWebhook = Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET");
-    var smtpHost = app.Configuration["SMTP_HOST"];
-    var whatsappUrl = Environment.GetEnvironmentVariable("WHATSAPP_API_URL");
-
-    logger.LogInformation("═══════════════════════════════════════");
-    logger.LogInformation("  Pizzaria Gourmet — Verificação de Config");
-    logger.LogInformation("═══════════════════════════════════════");
-    logger.LogInformation("  Admin: {Email}", app.Configuration["Admin:Email"] ?? "admin@pizzariagourmet.com (padrão)");
-
-    if (!string.IsNullOrEmpty(stripeKey))
-        logger.LogInformation("  ✅ Stripe API KEY configurada");
-    else
-        logger.LogWarning("  ⚠️  STRIPE_API_KEY não configurada — pagamentos com cartão não funcionarão");
-
-    if (!string.IsNullOrEmpty(stripeWebhook))
-        logger.LogInformation("  ✅ Stripe Webhook Secret configurado");
-    else
-        logger.LogWarning("  ⚠️  STRIPE_WEBHOOK_SECRET não configurada — confirmação via /api/orders/confirm-payment será usada");
-
-    if (!string.IsNullOrEmpty(smtpHost))
-        logger.LogInformation("  ✅ SMTP configurado — e-mails serão enviados");
-    else
-        logger.LogWarning("  ⚠️  SMTP_HOST não configurado — e-mails de confirmação não serão enviados");
-
-    if (!string.IsNullOrEmpty(whatsappUrl))
-        logger.LogInformation("  ✅ WhatsApp API configurada");
-    else
-        logger.LogWarning("  ⚠️  WHATSAPP_API_URL não configurada — notificações WhatsApp desativadas");
-
-    logger.LogInformation("═══════════════════════════════════════");
-});
+    using var sr = new StreamReader(req.Body);
+    var body = await sr.ReadToEndAsync();
+    var doc = JsonDocument.Parse(body);
+    var personId = doc.RootElement.TryGetProperty("personId", out var pid) ? pid.GetInt32() : 0;
+    var personName = doc.RootElement.TryGetProperty("personName", out var pn) ? pn.GetString() ?? "" : "";
+    if (personId == 0) return Results.BadRequest();
+    await orderSvc.AssignDeliveryPersonAsync(orderId, personId, personName);
+    return Results.Ok();
+}).RequireAuthorization();
 
 app.Run();

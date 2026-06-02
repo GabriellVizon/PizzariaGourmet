@@ -19,14 +19,51 @@
           <p><strong>E-mail:</strong> @Model.CustomerEmail</p>
           <p><strong>Endereço:</strong> @Model.CustomerAddress</p>
           <p><strong>CPF:</strong> @Model.CustomerCPF</p>
+          @if (!string.IsNullOrEmpty(Model.CustomerNotes))
+          {
+            <p><strong>Observações:</strong> @Model.CustomerNotes</p>
+          }
         </div>
         <div>
           <p><strong>Criado:</strong> @Model.CreatedAt</p>
-          <p><strong>Status:</strong> <span style="color:var(--brand);font-weight:700">@Model.Status</span></p>
-          <p><strong>Pagamento:</strong> @Model.PaymentMethod</p>
+          @if (!string.IsNullOrEmpty(Model.ScheduledTime))
+          {
+            <p><strong>Agendado:</strong> @Model.ScheduledTime</p>
+          }
+          <p><strong>Status:</strong> <span style="color:var(--brand);font-weight:700">
+            @{
+              var statusLabel = Model.Status switch
+              {
+                "pending" => "Pendente",
+                "paid" => "Pago",
+                "preparing" => "Preparando",
+                "delivering" => "Saiu para entrega",
+                "delivered" => "Entregue",
+                "cancelled" => "Cancelado",
+                _ => Model.Status
+              };
+            }
+            @statusLabel
+          </span></p>
+          <p><strong>Pagamento:</strong>
+            @{
+              var paymentLabel = Model.PaymentMethod switch
+              {
+                "card" => "Cartão de Crédito",
+                "pix" => "PIX",
+                "cash" => "Dinheiro",
+                _ => Model.PaymentMethod
+              };
+            }
+            @paymentLabel
+          </p>
           @if (!string.IsNullOrEmpty(Model.CouponCode))
           {
             <p><strong>Cupom:</strong> @Model.CouponCode (-R$ @Model.Discount.ToString("F2"))</p>
+          }
+          @if (!string.IsNullOrEmpty(Model.DeliveryPersonName))
+          {
+            <p><strong>Entregador:</strong> @Model.DeliveryPersonName</p>
           }
         </div>
       </div>
@@ -123,5 +160,53 @@
         </div>
       </div>
     </form>
+
+    <div class="admin-panel">
+      <h3>🏍️ Atribuir Entregador</h3>
+      <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+        <div style="flex:1">
+          <label for="delivery-person-select">Entregador</label>
+          <select id="delivery-person-select">
+            <option value="">Selecione um entregador...</option>
+          </select>
+        </div>
+        <div>
+          <button id="assign-delivery-btn" type="button" style="background:var(--accent)">Atribuir</button>
+        </div>
+      </div>
+      <div id="assign-result" style="margin-top:8px;font-size:0.85rem"></div>
+    </div>
   </div>
 </div>
+
+<script>
+async function loadDeliveryPersons() {
+  try {
+    const r = await fetch('/api/delivery-persons/available');
+    const list = await r.json();
+    const sel = document.getElementById('delivery-person-select');
+    sel.innerHTML = '<option value="">Selecione um entregador...</option>' +
+      list.map(p => `<option value="${p.id}" data-name="${p.name}">${p.name} ${p.vehicle ? '('+p.vehicle+')' : ''}</option>`).join('');
+  } catch {}
+}
+
+document.getElementById('assign-delivery-btn')?.addEventListener('click', async () => {
+  const sel = document.getElementById('delivery-person-select');
+  const id = sel.value;
+  if (!id) { document.getElementById('assign-result').innerHTML = '<span style="color:var(--brand)">Selecione um entregador</span>'; return; }
+  const name = sel.options[sel.selectedIndex].dataset.name;
+  try {
+    const r = await fetch('/api/orders/@Model.Id/assign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ personId: Number(id), personName: name })
+    });
+    if (r.ok) {
+      document.getElementById('assign-result').innerHTML = '<span style="color:#27ae60">✓ Entregador atribuído!</span>';
+      setTimeout(() => location.reload(), 1000);
+    }
+  } catch { document.getElementById('assign-result').innerHTML = '<span style="color:var(--brand)">Erro ao atribuir</span>'; }
+});
+
+loadDeliveryPersons();
+</script>

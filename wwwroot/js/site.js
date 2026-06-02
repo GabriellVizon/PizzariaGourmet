@@ -495,11 +495,25 @@ async function loadComplements() {
   }
 }
 
+async function checkStoreStatus() {
+  try {
+    const r = await fetch('/api/business-hours/check');
+    const data = await r.json();
+    if (!data.isOpen) {
+      const banner = document.createElement('div');
+      banner.style.cssText = 'background:var(--brand);color:#fff;text-align:center;padding:8px 16px;font-size:0.85rem;font-weight:600';
+      banner.innerHTML = `🔴 Loja fechada — Horário: ${data.openTime || '—'} às ${data.closeTime || '—'} | Pedidos podem ser agendados no checkout.`;
+      document.querySelector('.site-header')?.after(banner);
+    }
+  } catch {}
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   renderCart();
   loadProducts();
   loadComplements();
   loadSettings().then(() => renderCart());
+  checkStoreStatus();
 
   document.querySelectorAll('[data-action="open-cart"]').forEach(el => {
     el.addEventListener('click', (e) => { e.preventDefault(); openCart(); });
