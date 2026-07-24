@@ -8,13 +8,7 @@
   <div class="container">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px">
       <h2 style="margin:0">📦 Pedidos</h2>
-      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-        <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">Dashboard</a>
-        <a href="/Admin/Products" style="color:var(--brand);font-weight:600;text-decoration:none">Produtos</a>
-        <a href="/Admin/Complements" style="color:var(--brand);font-weight:600;text-decoration:none">Complementos</a>
-        <a href="/Admin/Settings" style="color:var(--text-light);font-weight:600;text-decoration:none">Config</a>
-        <a href="/Admin/Logout" style="color:#e74c3c;font-weight:600;text-decoration:none;font-size:0.85rem">Sair</a>
-      </div>
+      <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">← Voltar para o Dashboard</a>
     </div>
 
     <div class="admin-panel" style="margin-bottom:16px">
@@ -95,7 +89,7 @@
                   }
                   @payLabel
                 </td>
-                <td style="font-size:0.8rem;white-space:nowrap">@o.CreatedAt</td>
+                <td style="font-size:0.8rem;white-space:nowrap">@(DateTime.TryParse(o.CreatedAt, out var _dtO) ? _dtO.ToString("dd/MM HH:mm") : o.CreatedAt)</td>
                 <td>
                   @{
                     var statLabel = o.Status switch

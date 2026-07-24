@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PizzariaGourmet.Services;
+using DomPizzaria.Services;
 
 [Authorize]
 public class AdminDashboardModel : PageModel

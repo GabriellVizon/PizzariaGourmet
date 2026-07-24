@@ -1,17 +1,15 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authorization;
-using PizzariaGourmet.Data;
-using PizzariaGourmet.Models;
-using PizzariaGourmet.Services;
-using System.Text.RegularExpressions;
+using DomPizzaria.Data;
+using DomPizzaria.Models;
+using DomPizzaria.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var dbPath = System.IO.Path.Combine(builder.Environment.ContentRootPath, "Data", "app.db");
 System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(dbPath)!);
-builder.Services.AddDbContext<PizzariaGourmet.Data.AppDbContext>(options =>
+builder.Services.AddDbContext<DomPizzaria.Data.AppDbContext>(options =>
     options.UseSqlite($"Data Source={dbPath}"));
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
@@ -22,7 +20,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 })
-.AddEntityFrameworkStores<PizzariaGourmet.Data.AppDbContext>()
+.AddEntityFrameworkStores<DomPizzaria.Data.AppDbContext>()
 .AddDefaultTokenProviders();
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -37,15 +35,15 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "X-CSRF-TOKEN";
 });
 
-builder.Services.AddScoped<PizzariaGourmet.Services.ProductService>();
-builder.Services.AddScoped<PizzariaGourmet.Services.OrderService>();
-builder.Services.AddScoped<PizzariaGourmet.Services.NotificationService>();
-builder.Services.AddScoped<PizzariaGourmet.Services.ComplementService>();
-builder.Services.AddScoped<PizzariaGourmet.Services.CouponService>();
-builder.Services.AddScoped<PizzariaGourmet.Services.WhatsAppService>();
-builder.Services.AddScoped<PizzariaGourmet.Services.CustomerService>();
-builder.Services.AddScoped<PizzariaGourmet.Services.DeliveryService>();
-builder.Services.AddScoped<PizzariaGourmet.Services.ReportService>();
+builder.Services.AddScoped<DomPizzaria.Services.ProductService>();
+builder.Services.AddScoped<DomPizzaria.Services.OrderService>();
+builder.Services.AddScoped<DomPizzaria.Services.NotificationService>();
+builder.Services.AddScoped<DomPizzaria.Services.ComplementService>();
+builder.Services.AddScoped<DomPizzaria.Services.CouponService>();
+builder.Services.AddScoped<DomPizzaria.Services.WhatsAppService>();
+builder.Services.AddScoped<DomPizzaria.Services.CustomerService>();
+builder.Services.AddScoped<DomPizzaria.Services.DeliveryService>();
+builder.Services.AddScoped<DomPizzaria.Services.ReportService>();
 
 builder.Services.AddRazorPages();
 
@@ -53,7 +51,7 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<PizzariaGourmet.Data.AppDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<DomPizzaria.Data.AppDbContext>();
     await db.Database.EnsureCreatedAsync();
 
     // Migration: add missing columns for existing databases
@@ -80,7 +78,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-    var adminEmail = app.Configuration["Admin:Email"] ?? "admin@pizzariagourmet.com";
+    var adminEmail = app.Configuration["Admin:Email"] ?? "admin@dompizzaria.com";
     var adminPass = app.Configuration["Admin:Password"] ?? "Admin@123";
 
     if (await userManager.FindByEmailAsync(adminEmail) == null)
@@ -96,7 +94,7 @@ using (var scope = app.Services.CreateScope())
         if (System.IO.File.Exists(jsonPath))
         {
             var json = await System.IO.File.ReadAllTextAsync(jsonPath);
-            var products = JsonSerializer.Deserialize<List<PizzariaGourmet.Models.Product>>(json);
+            var products = JsonSerializer.Deserialize<List<DomPizzaria.Models.Product>>(json);
             if (products != null)
             {
                 db.Products.AddRange(products);
@@ -108,14 +106,14 @@ using (var scope = app.Services.CreateScope())
     if (!await db.Complements.AnyAsync())
     {
         db.Complements.AddRange(
-            new PizzariaGourmet.Models.Complement { Name = "Catupiry", Price = 3.00m, Available = true },
-            new PizzariaGourmet.Models.Complement { Name = "Cheddar", Price = 3.00m, Available = true },
-            new PizzariaGourmet.Models.Complement { Name = "Brigadeiro", Price = 4.00m, Available = true },
-            new PizzariaGourmet.Models.Complement { Name = "Bacon Extra", Price = 4.00m, Available = true },
-            new PizzariaGourmet.Models.Complement { Name = "Mussarela Extra", Price = 3.00m, Available = true },
-            new PizzariaGourmet.Models.Complement { Name = "Calabresa Extra", Price = 3.50m, Available = true },
-            new PizzariaGourmet.Models.Complement { Name = "Pepperoni Extra", Price = 4.50m, Available = true },
-            new PizzariaGourmet.Models.Complement { Name = "Chocolate", Price = 5.00m, Available = true }
+            new DomPizzaria.Models.Complement { Name = "Catupiry", Price = 3.00m, Available = true },
+            new DomPizzaria.Models.Complement { Name = "Cheddar", Price = 3.00m, Available = true },
+            new DomPizzaria.Models.Complement { Name = "Brigadeiro", Price = 4.00m, Available = true },
+            new DomPizzaria.Models.Complement { Name = "Bacon Extra", Price = 4.00m, Available = true },
+            new DomPizzaria.Models.Complement { Name = "Mussarela Extra", Price = 3.00m, Available = true },
+            new DomPizzaria.Models.Complement { Name = "Calabresa Extra", Price = 3.50m, Available = true },
+            new DomPizzaria.Models.Complement { Name = "Pepperoni Extra", Price = 4.50m, Available = true },
+            new DomPizzaria.Models.Complement { Name = "Chocolate", Price = 5.00m, Available = true }
         );
         await db.SaveChangesAsync();
     }
@@ -124,7 +122,7 @@ using (var scope = app.Services.CreateScope())
     {
         for (int d = 0; d < 7; d++)
         {
-            db.BusinessHours.Add(new PizzariaGourmet.Models.BusinessHours
+            db.BusinessHours.Add(new DomPizzaria.Models.BusinessHours
             {
                 DayOfWeek = d,
                 OpenTime = d == 0 ? "18:00" : "17:00",
@@ -180,8 +178,8 @@ app.MapGet("/api/settings", () =>
             deliveryFee = 5.00,
             freeDeliveryMin = 50.00,
             whatsapp = "5524992206707",
-            pixKey = "contato@pizzariagourmet.com",
-            storeName = "Pizzaria Gourmet",
+            pixKey = "contato@dompizzaria.com",
+            storeName = "Dom Pizzaria",
             address = "Rua Exemplo, 123 - Centro",
             cnpj = "00.000.000/0001-00",
             allowScheduling = true,
@@ -217,51 +215,51 @@ app.MapPut("/api/settings", async (HttpRequest req, ILogger<Program> logger) =>
     return Results.Ok();
 }).RequireAuthorization();
 
-app.MapGet("/api/products", async (PizzariaGourmet.Services.ProductService svc) =>
+app.MapGet("/api/products", async (DomPizzaria.Services.ProductService svc) =>
     Results.Json(await svc.GetAllAsync()));
 
-app.MapGet("/api/products/{id:int}", async (int id, PizzariaGourmet.Services.ProductService svc) =>
+app.MapGet("/api/products/{id:int}", async (int id, DomPizzaria.Services.ProductService svc) =>
 {
     var p = await svc.GetByIdAsync(id);
     return p is null ? Results.NotFound() : Results.Json(p);
 });
 
-app.MapPost("/api/products", async (HttpRequest req, PizzariaGourmet.Services.ProductService svc) =>
+app.MapPost("/api/products", async (HttpRequest req, DomPizzaria.Services.ProductService svc) =>
 {
-    var product = await JsonSerializer.DeserializeAsync<PizzariaGourmet.Models.Product>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var product = await JsonSerializer.DeserializeAsync<DomPizzaria.Models.Product>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     if (product == null) return Results.BadRequest();
     var created = await svc.CreateAsync(product);
     return Results.Created($"/api/products/{created.Id}", created);
 }).RequireAuthorization();
 
-app.MapPut("/api/products/{id:int}", async (int id, HttpRequest req, PizzariaGourmet.Services.ProductService svc) =>
+app.MapPut("/api/products/{id:int}", async (int id, HttpRequest req, DomPizzaria.Services.ProductService svc) =>
 {
-    var product = await JsonSerializer.DeserializeAsync<PizzariaGourmet.Models.Product>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var product = await JsonSerializer.DeserializeAsync<DomPizzaria.Models.Product>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     if (product == null) return Results.BadRequest();
     var updated = await svc.UpdateAsync(id, product);
     return updated is null ? Results.NotFound() : Results.Json(updated);
 }).RequireAuthorization();
 
-app.MapDelete("/api/products/{id:int}", async (int id, PizzariaGourmet.Services.ProductService svc) =>
+app.MapDelete("/api/products/{id:int}", async (int id, DomPizzaria.Services.ProductService svc) =>
 {
     var ok = await svc.DeleteAsync(id);
     return ok ? Results.Ok() : Results.NotFound();
 }).RequireAuthorization();
 
 // Complement endpoints
-app.MapGet("/api/complements", async (PizzariaGourmet.Services.ComplementService svc) =>
+app.MapGet("/api/complements", async (DomPizzaria.Services.ComplementService svc) =>
     Results.Json(await svc.GetAllAsync()));
 
-app.MapGet("/api/complements/available", async (PizzariaGourmet.Services.ComplementService svc) =>
+app.MapGet("/api/complements/available", async (DomPizzaria.Services.ComplementService svc) =>
     Results.Json(await svc.GetAvailableAsync()));
 
-app.MapGet("/api/complements/{id:int}", async (int id, PizzariaGourmet.Services.ComplementService svc) =>
+app.MapGet("/api/complements/{id:int}", async (int id, DomPizzaria.Services.ComplementService svc) =>
 {
     var c = await svc.GetByIdAsync(id);
     return c is null ? Results.NotFound() : Results.Json(c);
 });
 
-app.MapPost("/api/complements", async (HttpRequest req, PizzariaGourmet.Services.ComplementService svc) =>
+app.MapPost("/api/complements", async (HttpRequest req, DomPizzaria.Services.ComplementService svc) =>
 {
     var complement = await JsonSerializer.DeserializeAsync<Complement>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     if (complement == null) return Results.BadRequest();
@@ -269,7 +267,7 @@ app.MapPost("/api/complements", async (HttpRequest req, PizzariaGourmet.Services
     return Results.Created($"/api/complements/{created.Id}", created);
 }).RequireAuthorization();
 
-app.MapPut("/api/complements/{id:int}", async (int id, HttpRequest req, PizzariaGourmet.Services.ComplementService svc) =>
+app.MapPut("/api/complements/{id:int}", async (int id, HttpRequest req, DomPizzaria.Services.ComplementService svc) =>
 {
     var complement = await JsonSerializer.DeserializeAsync<Complement>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     if (complement == null) return Results.BadRequest();
@@ -277,13 +275,13 @@ app.MapPut("/api/complements/{id:int}", async (int id, HttpRequest req, Pizzaria
     return updated is null ? Results.NotFound() : Results.Json(updated);
 }).RequireAuthorization();
 
-app.MapDelete("/api/complements/{id:int}", async (int id, PizzariaGourmet.Services.ComplementService svc) =>
+app.MapDelete("/api/complements/{id:int}", async (int id, DomPizzaria.Services.ComplementService svc) =>
 {
     var ok = await svc.DeleteAsync(id);
     return ok ? Results.Ok() : Results.NotFound();
 }).RequireAuthorization();
 
-app.MapPost("/create-checkout-session", async (HttpRequest req, OrderService orderSvc, NotificationService notifySvc, PizzariaGourmet.Services.CouponService couponSvc, WhatsAppService whatsAppSvc, PizzariaGourmet.Services.CustomerService customerSvc, DeliveryService deliverySvc, ILogger<Program> logger) =>
+app.MapPost("/create-checkout-session", async (HttpRequest req, OrderService orderSvc, NotificationService notifySvc, DomPizzaria.Services.CouponService couponSvc, WhatsAppService whatsAppSvc, DomPizzaria.Services.CustomerService customerSvc, DeliveryService deliverySvc, ILogger<Program> logger) =>
 {
     var domain = Environment.GetEnvironmentVariable("DOMAIN") ?? "http://localhost:5000";
 
@@ -528,7 +526,7 @@ app.MapGet("/api/orders/new-count", async (OrderService orderSvc, HttpRequest re
 });
 
 // Coupon validation
-app.MapGet("/api/coupons/validate", async (string code, decimal? subtotal, PizzariaGourmet.Services.CouponService couponSvc) =>
+app.MapGet("/api/coupons/validate", async (string code, decimal? subtotal, DomPizzaria.Services.CouponService couponSvc) =>
 {
     var coupon = await couponSvc.ValidateAsync(code, subtotal ?? 0);
     if (coupon == null)
@@ -547,32 +545,32 @@ app.MapGet("/api/coupons/validate", async (string code, decimal? subtotal, Pizza
 });
 
 // Coupon CRUD
-app.MapGet("/api/coupons", async (PizzariaGourmet.Services.CouponService svc) =>
+app.MapGet("/api/coupons", async (DomPizzaria.Services.CouponService svc) =>
     Results.Json(await svc.GetAllAsync()));
 
-app.MapGet("/api/coupons/{id:int}", async (int id, PizzariaGourmet.Services.CouponService svc) =>
+app.MapGet("/api/coupons/{id:int}", async (int id, DomPizzaria.Services.CouponService svc) =>
 {
     var c = await svc.GetByIdAsync(id);
     return c is null ? Results.NotFound() : Results.Json(c);
 });
 
-app.MapPost("/api/coupons", async (HttpRequest req, PizzariaGourmet.Services.CouponService svc) =>
+app.MapPost("/api/coupons", async (HttpRequest req, DomPizzaria.Services.CouponService svc) =>
 {
-    var coupon = await JsonSerializer.DeserializeAsync<PizzariaGourmet.Models.Coupon>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var coupon = await JsonSerializer.DeserializeAsync<DomPizzaria.Models.Coupon>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     if (coupon == null) return Results.BadRequest();
     var created = await svc.CreateAsync(coupon);
     return Results.Created($"/api/coupons/{created.Id}", created);
 }).RequireAuthorization();
 
-app.MapPut("/api/coupons/{id:int}", async (int id, HttpRequest req, PizzariaGourmet.Services.CouponService svc) =>
+app.MapPut("/api/coupons/{id:int}", async (int id, HttpRequest req, DomPizzaria.Services.CouponService svc) =>
 {
-    var coupon = await JsonSerializer.DeserializeAsync<PizzariaGourmet.Models.Coupon>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    var coupon = await JsonSerializer.DeserializeAsync<DomPizzaria.Models.Coupon>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     if (coupon == null) return Results.BadRequest();
     var updated = await svc.UpdateAsync(id, coupon);
     return updated is null ? Results.NotFound() : Results.Json(updated);
 }).RequireAuthorization();
 
-app.MapDelete("/api/coupons/{id:int}", async (int id, PizzariaGourmet.Services.CouponService svc) =>
+app.MapDelete("/api/coupons/{id:int}", async (int id, DomPizzaria.Services.CouponService svc) =>
 {
     var ok = await svc.DeleteAsync(id);
     return ok ? Results.Ok() : Results.NotFound();
@@ -608,38 +606,6 @@ app.MapPut("/api/business-hours", async (HttpRequest req, DeliveryService svc) =
     return Results.Ok();
 }).RequireAuthorization();
 
-// Delivery Areas CRUD
-app.MapGet("/api/delivery-areas", async (DeliveryService svc) =>
-    Results.Json(await svc.GetAllAreasAsync()));
-
-app.MapGet("/api/delivery-areas/{id:int}", async (int id, DeliveryService svc) =>
-{
-    var a = await svc.GetAreaByIdAsync(id);
-    return a is null ? Results.NotFound() : Results.Json(a);
-});
-
-app.MapPost("/api/delivery-areas", async (HttpRequest req, DeliveryService svc) =>
-{
-    var area = await JsonSerializer.DeserializeAsync<DeliveryArea>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-    if (area == null) return Results.BadRequest();
-    var created = await svc.CreateAreaAsync(area);
-    return Results.Created($"/api/delivery-areas/{created.Id}", created);
-}).RequireAuthorization();
-
-app.MapPut("/api/delivery-areas/{id:int}", async (int id, HttpRequest req, DeliveryService svc) =>
-{
-    var area = await JsonSerializer.DeserializeAsync<DeliveryArea>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-    if (area == null) return Results.BadRequest();
-    var updated = await svc.UpdateAreaAsync(id, area);
-    return updated is null ? Results.NotFound() : Results.Json(updated);
-}).RequireAuthorization();
-
-app.MapDelete("/api/delivery-areas/{id:int}", async (int id, DeliveryService svc) =>
-{
-    var ok = await svc.DeleteAreaAsync(id);
-    return ok ? Results.Ok() : Results.NotFound();
-}).RequireAuthorization();
-
 // Check CEP against delivery areas
 app.MapGet("/api/delivery-areas/check-cep", async (string cep, DeliveryService svc) =>
 {
@@ -664,66 +630,9 @@ app.MapGet("/api/delivery-areas/check-cep", async (string cep, DeliveryService s
         return Results.Json(new { valid = false });
 });
 
-// Delivery Persons CRUD
-app.MapGet("/api/delivery-persons", async (DeliveryService svc) =>
-    Results.Json(await svc.GetAllPersonsAsync()));
-
+// Delivery Persons
 app.MapGet("/api/delivery-persons/available", async (DeliveryService svc) =>
     Results.Json(await svc.GetAvailablePersonsAsync()));
-
-app.MapGet("/api/delivery-persons/{id:int}", async (int id, DeliveryService svc) =>
-{
-    var p = await svc.GetPersonByIdAsync(id);
-    return p is null ? Results.NotFound() : Results.Json(p);
-});
-
-app.MapPost("/api/delivery-persons", async (HttpRequest req, DeliveryService svc) =>
-{
-    var person = await JsonSerializer.DeserializeAsync<DeliveryPerson>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-    if (person == null) return Results.BadRequest();
-    var created = await svc.CreatePersonAsync(person);
-    return Results.Created($"/api/delivery-persons/{created.Id}", created);
-}).RequireAuthorization();
-
-app.MapPut("/api/delivery-persons/{id:int}", async (int id, HttpRequest req, DeliveryService svc) =>
-{
-    var person = await JsonSerializer.DeserializeAsync<DeliveryPerson>(req.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-    if (person == null) return Results.BadRequest();
-    var updated = await svc.UpdatePersonAsync(id, person);
-    return updated is null ? Results.NotFound() : Results.Json(updated);
-}).RequireAuthorization();
-
-app.MapDelete("/api/delivery-persons/{id:int}", async (int id, DeliveryService svc) =>
-{
-    var ok = await svc.DeletePersonAsync(id);
-    return ok ? Results.Ok() : Results.NotFound();
-}).RequireAuthorization();
-
-// Customers CRUD
-app.MapGet("/api/customers", async (PizzariaGourmet.Services.CustomerService svc) =>
-    Results.Json(await svc.GetAllAsync()));
-
-app.MapGet("/api/customers/search", async (string? name, string? phone, PizzariaGourmet.Services.CustomerService svc) =>
-    Results.Json(await svc.SearchAsync(name, phone)));
-
-app.MapGet("/api/customers/{id:int}", async (int id, PizzariaGourmet.Services.CustomerService svc) =>
-{
-    var c = await svc.GetByIdAsync(id);
-    return c is null ? Results.NotFound() : Results.Json(c);
-});
-
-app.MapGet("/api/customers/{id:int}/orders", async (int id, OrderService orderSvc) =>
-    Results.Json(await orderSvc.GetByCustomerIdAsync(id)));
-
-app.MapPut("/api/customers/{id:int}/notes", async (int id, HttpRequest req, PizzariaGourmet.Services.CustomerService svc) =>
-{
-    using var sr = new StreamReader(req.Body);
-    var body = await sr.ReadToEndAsync();
-    var doc = JsonDocument.Parse(body);
-    var notes = doc.RootElement.TryGetProperty("notes", out var n) ? n.GetString() ?? "" : "";
-    await svc.UpdateNotesAsync(id, notes);
-    return Results.Ok();
-}).RequireAuthorization();
 
 // Reports
 app.MapGet("/api/reports", async (DateTime? dateFrom, DateTime? dateTo, ReportService svc) =>

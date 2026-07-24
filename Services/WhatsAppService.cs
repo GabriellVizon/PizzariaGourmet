@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace PizzariaGourmet.Services;
+namespace DomPizzaria.Services;
 
 public class WhatsAppService
 {
@@ -45,7 +45,7 @@ public class WhatsAppService
 
         var label = statusLabels.GetValueOrDefault(status, status);
         var emoji = statusEmojis.GetValueOrDefault(status, "");
-        var trackingUrl = $"{domain}/Rastreio?PedidoId={orderId}";
+        var trackingUrl = $"{domain}/Admin/Order?id={orderId}";
 
         var message = $"{emoji} *Atualização do Pedido #{orderId[..8]}*\n\nOlá {customerName}, seu pedido foi atualizado para: *{label}*\n\nAcompanhe pelo link: {trackingUrl}";
 

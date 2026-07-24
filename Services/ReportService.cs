@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using PizzariaGourmet.Data;
-using PizzariaGourmet.Models;
+using DomPizzaria.Data;
+using DomPizzaria.Models;
 
-namespace PizzariaGourmet.Services;
+namespace DomPizzaria.Services;
 
 public class ReportService
 {
@@ -19,6 +19,7 @@ public class ReportService
         decimal AvgOrderValue,
         int CancelledOrders,
         decimal TotalDiscounts,
+        decimal TotalDeliveryFees,
         List<DailySales> DailySales,
         List<ProductSales> TopProducts,
         List<PaymentMethodSales> PaymentBreakdown
@@ -104,6 +105,7 @@ public class ReportService
             active.Count > 0 ? active.Sum(o => o.Total) / active.Count : 0,
             cancelled.Count,
             list.Sum(o => o.Discount),
+            active.Sum(o => o.DeliveryFee),
             dailySales,
             topProducts,
             paymentBreakdown

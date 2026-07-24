@@ -9,13 +9,7 @@
   <div class="container">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px">
         <h2 style="margin:0">Gerenciar Produtos</h2>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-          <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">Dashboard</a>
-          <a href="/Admin/Orders" style="color:var(--text-light);font-weight:600;text-decoration:none">Pedidos</a>
-          <a href="/Admin/Complements" style="color:var(--brand);font-weight:600;text-decoration:none">Complementos</a>
-          <a href="/Admin/Settings" style="color:var(--text-light);font-weight:600;text-decoration:none">Config</a>
-          <a href="/Admin/Logout" style="color:#e74c3c;font-weight:600;text-decoration:none;font-size:0.85rem">Sair</a>
-        </div>
+        <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">← Voltar para o Dashboard</a>
       </div>
 
     <div class="admin-panel">
@@ -42,7 +36,6 @@
           </div>
           <small style="color:var(--text-light)">Cole uma URL ou faça upload de uma imagem</small>
         </div>
-        <div id="size-editor"></div>
         <div>
           <label>Categoria</label>
           <select name="category">
@@ -53,6 +46,7 @@
             <option value="Bebida">Bebida</option>
           </select>
         </div>
+        <div id="size-editor"></div>
         <div>
           <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer">
             <input name="available" type="checkbox" checked value="true" style="width:auto" />

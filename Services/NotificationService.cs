@@ -1,7 +1,7 @@
 using MailKit.Net.Smtp;
 using MimeKit;
 
-namespace PizzariaGourmet.Services;
+namespace DomPizzaria.Services;
 
 public class NotificationService
 {
@@ -97,7 +97,7 @@ public class NotificationService
     public string GetTrackingUrl(string orderId)
     {
         var domain = Environment.GetEnvironmentVariable("DOMAIN") ?? "http://localhost:5000";
-        return $"{domain}/Rastreio?PedidoId={orderId}";
+        return $"{domain}/Admin/Order?id={orderId}";
     }
 
     public async Task SendCustomerConfirmationAsync(string customerEmail, string customerName, string orderId, string orderSummary)
@@ -121,7 +121,7 @@ public class NotificationService
 
         var smtpPort = int.TryParse(smtpPortStr, out var p) ? p : 587;
         var domain = Environment.GetEnvironmentVariable("DOMAIN") ?? "http://localhost:5000";
-        var trackingUrl = $"{domain}/Rastreio?PedidoId={orderId}";
+        var trackingUrl = $"{domain}/Admin/Order?id={orderId}";
         var shortId = orderId.Length > 8 ? orderId[..8] : orderId;
 
         try
@@ -147,7 +147,7 @@ public class NotificationService
 <div style='margin:20px 0;text-align:center'>
 <a href='{trackingUrl}' style='display:inline-block;background:#e74c3c;color:#fff;padding:12px 24px;border-radius:50px;text-decoration:none;font-weight:700'>📦 Acompanhar Pedido</a>
 </div>
-<p style='color:#888;font-size:0.85rem'>A equipe da <strong>Pizzaria Gourmet</strong> vai preparar tudo com carinho. 🍕</p>
+<p style='color:#888;font-size:0.85rem'>A equipe da <strong>Dom Pizzaria</strong> vai preparar tudo com carinho. 🍕</p>
 </div>
 </body>
 </html>",
@@ -155,9 +155,9 @@ public class NotificationService
             };
 
             var message = new MimeMessage();
-            message.From.Add(MailboxAddress.Parse(smtpUser ?? "noreply@pizzariagourmet.com"));
+            message.From.Add(MailboxAddress.Parse(smtpUser ?? "noreply@dompizzaria.com"));
             message.To.Add(MailboxAddress.Parse(customerEmail));
-            message.Subject = $"🍕 Pedido #{shortId} confirmado — Pizzaria Gourmet";
+            message.Subject = $"🍕 Pedido #{shortId} confirmado — Dom Pizzaria";
             message.Body = bodyBuilder.ToMessageBody();
 
             using var client = new SmtpClient();

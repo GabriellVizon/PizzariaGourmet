@@ -8,7 +8,10 @@
   <div class="container">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
       <h2 style="margin:0">Pedido @(Model.Id?.Length > 8 ? Model.Id[..8] : Model.Id)</h2>
-      <button onclick="window.print()" class="btn-print" style="padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:50px;font-weight:600;cursor:pointer">🖨️ Imprimir</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">← Voltar para o Dashboard</a>
+        <button onclick="window.print()" class="btn-print" style="padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:50px;font-weight:600;cursor:pointer">🖨️ Imprimir</button>
+      </div>
     </div>
 
     <div class="admin-panel">
@@ -25,10 +28,10 @@
           }
         </div>
         <div>
-          <p><strong>Criado:</strong> @Model.CreatedAt</p>
+          <p><strong>Criado:</strong> @(DateTime.TryParse(Model.CreatedAt, out var _dtCriado) ? _dtCriado.ToString("dd/MM/yyyy 'às' HH:mm") : Model.CreatedAt)</p>
           @if (!string.IsNullOrEmpty(Model.ScheduledTime))
           {
-            <p><strong>Agendado:</strong> @Model.ScheduledTime</p>
+            <p><strong>Agendado:</strong> @(DateTime.TryParse(Model.ScheduledTime, out var _dtAgend) ? _dtAgend.ToString("dd/MM/yyyy 'às' HH:mm") : Model.ScheduledTime)</p>
           }
           <p><strong>Status:</strong> <span style="color:var(--brand);font-weight:700">
             @{
@@ -160,53 +163,5 @@
         </div>
       </div>
     </form>
-
-    <div class="admin-panel">
-      <h3>🏍️ Atribuir Entregador</h3>
-      <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
-        <div style="flex:1">
-          <label for="delivery-person-select">Entregador</label>
-          <select id="delivery-person-select">
-            <option value="">Selecione um entregador...</option>
-          </select>
-        </div>
-        <div>
-          <button id="assign-delivery-btn" type="button" style="background:var(--accent)">Atribuir</button>
-        </div>
-      </div>
-      <div id="assign-result" style="margin-top:8px;font-size:0.85rem"></div>
-    </div>
   </div>
 </div>
-
-<script>
-async function loadDeliveryPersons() {
-  try {
-    const r = await fetch('/api/delivery-persons/available');
-    const list = await r.json();
-    const sel = document.getElementById('delivery-person-select');
-    sel.innerHTML = '<option value="">Selecione um entregador...</option>' +
-      list.map(p => `<option value="${p.id}" data-name="${p.name}">${p.name} ${p.vehicle ? '('+p.vehicle+')' : ''}</option>`).join('');
-  } catch {}
-}
-
-document.getElementById('assign-delivery-btn')?.addEventListener('click', async () => {
-  const sel = document.getElementById('delivery-person-select');
-  const id = sel.value;
-  if (!id) { document.getElementById('assign-result').innerHTML = '<span style="color:var(--brand)">Selecione um entregador</span>'; return; }
-  const name = sel.options[sel.selectedIndex].dataset.name;
-  try {
-    const r = await fetch('/api/orders/@Model.Id/assign', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ personId: Number(id), personName: name })
-    });
-    if (r.ok) {
-      document.getElementById('assign-result').innerHTML = '<span style="color:#27ae60">✓ Entregador atribuído!</span>';
-      setTimeout(() => location.reload(), 1000);
-    }
-  } catch { document.getElementById('assign-result').innerHTML = '<span style="color:var(--brand)">Erro ao atribuir</span>'; }
-});
-
-loadDeliveryPersons();
-</script>

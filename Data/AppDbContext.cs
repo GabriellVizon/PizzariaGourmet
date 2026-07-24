@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using PizzariaGourmet.Models;
+using DomPizzaria.Models;
 
-namespace PizzariaGourmet.Data;
+namespace DomPizzaria.Data;
 
 public class AppDbContext : IdentityDbContext<IdentityUser>
 {

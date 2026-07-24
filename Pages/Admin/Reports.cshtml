@@ -7,48 +7,121 @@
 
 <div class="admin-page">
   <div class="container">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:8px">
       <h2 style="margin:0">📊 Relatórios de Vendas</h2>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-        <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">Dashboard</a>
-        <a href="/Admin/Orders" style="color:var(--text-light);font-weight:600;text-decoration:none">Pedidos</a>
-        <a href="/Admin/Logout" style="color:#e74c3c;font-weight:600;text-decoration:none;font-size:0.85rem">Sair</a>
-      </div>
+      <a href="/Admin/Index" style="color:var(--text-light);font-weight:600;text-decoration:none">← Voltar para o Dashboard</a>
     </div>
 
-    <div class="admin-panel" style="margin-bottom:16px">
+    <div class="admin-panel" style="margin-bottom:20px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <button type="button" class="quick-filter" data-range="today">Hoje</button>
+        <button type="button" class="quick-filter" data-range="7">Últimos 7 dias</button>
+        <button type="button" class="quick-filter active" data-range="30">Últimos 30 dias</button>
+        <button type="button" class="quick-filter" data-range="month">Este mês</button>
+        <button type="button" class="quick-filter" data-range="all">Tudo</button>
+      </div>
       <form id="report-filters" style="display:flex;gap:12px;flex-wrap:wrap;align-items:end">
         <div style="min-width:130px">
-          <label for="dateFrom">De</label>
+          <label for="dateFrom">Data inicial</label>
           <input id="dateFrom" type="date" />
         </div>
         <div style="min-width:130px">
-          <label for="dateTo">Até</label>
+          <label for="dateTo">Data final</label>
           <input id="dateTo" type="date" />
         </div>
         <div style="display:flex;gap:8px">
           <button type="submit">Gerar Relatório</button>
-          <button type="button" id="export-csv" style="background:var(--accent)">Exportar CSV</button>
+          <button type="button" id="export-csv" style="background:var(--accent)">📥 Exportar CSV</button>
         </div>
       </form>
     </div>
 
     <div id="report-content">
-      <div style="text-align:center;padding:40px;color:var(--text-light)">Clique em "Gerar Relatório" para visualizar os dados.</div>
+      <div style="text-align:center;padding:40px;color:var(--text-light)">Selecione um período e clique em "Gerar Relatório".</div>
     </div>
   </div>
 </div>
 
 <style>
-.report-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px }
-.report-card { background:var(--bg);border-radius:var(--radius-sm);padding:16px;text-align:center }
-.report-card .value { font-size:1.5rem;font-weight:800;color:var(--brand) }
-.report-card .label { font-size:0.8rem;color:var(--text-light);margin-top:4px }
-.report-section { margin-bottom:24px }
-.report-section h3 { margin-bottom:12px;font-size:1rem }
+  .quick-filter {
+    padding: 6px 16px;
+    border-radius: 50px;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .quick-filter:hover { border-color: var(--brand); color: var(--brand); }
+  .quick-filter.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+  .report-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .report-stat {
+    background: #fff;
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    text-align: center;
+    border-left: 4px solid var(--brand);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .report-stat.green { border-left-color: #27ae60; }
+  .report-stat.orange { border-left-color: #f39c12; }
+  .report-stat.red { border-left-color: #e74c3c; }
+  .report-stat.blue { border-left-color: #3498db; }
+  .report-stat .stat-value { font-size: 1.4rem; font-weight: 800; color: #1a1a2e; }
+  .report-stat .stat-label { font-size: 0.8rem; color: #555; margin-top: 4px; font-weight: 500; }
+
+  .report-section { margin-bottom: 28px; }
+  .report-section h3 { margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+  .report-section h3 span { font-size: 1.1rem; }
 </style>
 
 <script>
+function getDateRange(range) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let from, to;
+
+  switch (range) {
+    case 'today':
+      from = today; to = today; break;
+    case '7':
+      from = new Date(today); from.setDate(from.getDate() - 6); to = today; break;
+    case '30':
+      from = new Date(today); from.setDate(from.getDate() - 29); to = today; break;
+    case 'month':
+      from = new Date(now.getFullYear(), now.getMonth(), 1); to = today; break;
+    case 'all':
+      from = null; to = null; break;
+    default:
+      from = null; to = null;
+  }
+
+  return {
+    from: from ? from.toISOString().split('T')[0] : '',
+    to: to ? to.toISOString().split('T')[0] : ''
+  };
+}
+
+document.querySelectorAll('.quick-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.quick-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const range = btn.dataset.range;
+    const dates = getDateRange(range);
+    document.getElementById('dateFrom').value = dates.from;
+    document.getElementById('dateTo').value = dates.to;
+    loadReport(dates.from, dates.to);
+  });
+});
+
 async function loadReport(dateFrom, dateTo) {
   const el = document.getElementById('report-content');
   el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light)">Carregando...</div>';
@@ -60,76 +133,81 @@ async function loadReport(dateFrom, dateTo) {
     const data = await r.json();
     if (r.status === 401) { window.location.href = '/Admin/Login'; return; }
 
+    const paymentLabels = { card: '💳 Cartão', pix: '📱 PIX', cash: '💵 Dinheiro' };
+
     el.innerHTML = `
-      <div class="report-grid">
-        <div class="report-card">
-          <div class="value">R$ ${data.totalRevenue.toFixed(2)}</div>
-          <div class="label">Faturamento Total</div>
+      <div class="report-summary">
+        <div class="report-stat">
+          <div class="stat-value">R$ ${data.totalRevenue.toFixed(2)}</div>
+          <div class="stat-label">Faturamento Total</div>
         </div>
-        <div class="report-card">
-          <div class="value">${data.totalOrders}</div>
-          <div class="label">Pedidos</div>
+        <div class="report-stat green">
+          <div class="stat-value">${data.totalOrders}</div>
+          <div class="stat-label">Pedidos Realizados</div>
         </div>
-        <div class="report-card">
-          <div class="value">R$ ${data.avgOrderValue.toFixed(2)}</div>
-          <div class="label">Ticket Médio</div>
+        <div class="report-stat orange">
+          <div class="stat-value">R$ ${data.avgOrderValue.toFixed(2)}</div>
+          <div class="stat-label">Ticket Médio</div>
         </div>
-        <div class="report-card">
-          <div class="value">${data.cancelledOrders}</div>
-          <div class="label">Cancelados</div>
+        <div class="report-stat blue">
+          <div class="stat-value">R$ ${data.totalDeliveryFees.toFixed(2)}</div>
+          <div class="stat-label">Taxas de Entrega</div>
         </div>
-        <div class="report-card">
-          <div class="value">R$ ${data.totalDiscounts.toFixed(2)}</div>
-          <div class="label">Descontos Concedidos</div>
+        <div class="report-stat red">
+          <div class="stat-value">R$ ${data.totalDiscounts.toFixed(2)}</div>
+          <div class="stat-label">Descontos</div>
+        </div>
+        <div class="report-stat red">
+          <div class="stat-value">${data.cancelledOrders}</div>
+          <div class="stat-label">Cancelados</div>
         </div>
       </div>
 
       <div class="report-section">
-        <h3>📈 Vendas por Dia</h3>
+        <h3><span>📈</span> Vendas por Dia</h3>
         ${data.dailySales && data.dailySales.length > 0 ? `
         <div class="admin-table-wrap"><table class="admin-table">
           <thead><tr><th>Data</th><th>Pedidos</th><th>Faturamento</th></tr></thead>
           <tbody>${data.dailySales.map(d => `
             <tr>
-              <td>${new Date(d.date+'T12:00:00').toLocaleDateString('pt-BR')}</td>
+              <td>${new Date(d.date+'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })}</td>
               <td>${d.orders}</td>
               <td>R$ ${d.revenue.toFixed(2)}</td>
             </tr>
           `).join('')}</tbody>
         </table></div>
-        ` : '<p style="color:var(--text-light)">Nenhum dado disponível.</p>'}
+        ` : '<p style="color:var(--text-light)">Nenhum dado disponível para o período selecionado.</p>'}
       </div>
 
       <div class="report-section">
-        <h3>🏆 Produtos Mais Vendidos</h3>
+        <h3><span>🏆</span> Produtos Mais Vendidos</h3>
         ${data.topProducts && data.topProducts.length > 0 ? `
         <div class="admin-table-wrap"><table class="admin-table">
-          <thead><tr><th>Produto</th><th>Quantidade</th><th>Faturamento</th></tr></thead>
-          <tbody>${data.topProducts.map(p => `
+          <thead><tr><th>#</th><th>Produto</th><th>Qtd</th><th>Faturamento</th></tr></thead>
+          <tbody>${data.topProducts.map((p, i) => `
             <tr>
+              <td>${i + 1}º</td>
               <td class="td-name">${p.name}</td>
               <td>${p.quantity}</td>
               <td>R$ ${p.revenue.toFixed(2)}</td>
             </tr>
           `).join('')}</tbody>
         </table></div>
-        ` : '<p style="color:var(--text-light)">Nenhum dado disponível.</p>'}
+        ` : '<p style="color:var(--text-light)">Nenhum dado disponível para o período selecionado.</p>'}
       </div>
 
       <div class="report-section">
-        <h3>💳 Formas de Pagamento</h3>
+        <h3><span>💳</span> Formas de Pagamento</h3>
         ${data.paymentBreakdown && data.paymentBreakdown.length > 0 ? `
-        <div class="admin-table-wrap"><table class="admin-table">
-          <thead><tr><th>Método</th><th>Pedidos</th><th>Faturamento</th></tr></thead>
-          <tbody>${data.paymentBreakdown.map(p => `
-            <tr>
-              <td>${p.method}</td>
-              <td>${p.orders}</td>
-              <td>R$ ${p.revenue.toFixed(2)}</td>
-            </tr>
-          `).join('')}</tbody>
-        </table></div>
-        ` : '<p style="color:var(--text-light)">Nenhum dado disponível.</p>'}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+          ${data.paymentBreakdown.map(p => `
+            <div class="report-stat">
+              <div class="stat-value">${p.orders}</div>
+              <div class="stat-label">${paymentLabels[p.method] || p.method} — R$ ${p.revenue.toFixed(2)}</div>
+            </div>
+          `).join('')}
+        </div>
+        ` : '<p style="color:var(--text-light)">Nenhum dado disponível para o período selecionado.</p>'}
       </div>
     `;
     window._reportData = data;
@@ -140,6 +218,7 @@ async function loadReport(dateFrom, dateTo) {
 
 document.getElementById('report-filters').addEventListener('submit', (e) => {
   e.preventDefault();
+  document.querySelectorAll('.quick-filter').forEach(b => b.classList.remove('active'));
   const dateFrom = document.getElementById('dateFrom').value;
   const dateTo = document.getElementById('dateTo').value;
   loadReport(dateFrom, dateTo);
@@ -148,29 +227,47 @@ document.getElementById('report-filters').addEventListener('submit', (e) => {
 document.getElementById('export-csv')?.addEventListener('click', () => {
   const data = window._reportData;
   if (!data) { alert('Gere um relatório primeiro.'); return; }
+
+  const paymentLabels = { card: 'Cartão', pix: 'PIX', cash: 'Dinheiro' };
   let csv = '\uFEFF';
+  csv += 'RELATÓRIO DE VENDAS - DOM PIZZARIA\n\n';
+  csv += 'Resumo\n';
   csv += 'Indicador,Valor\n';
   csv += `Faturamento Total,R$ ${data.totalRevenue.toFixed(2)}\n`;
   csv += `Total de Pedidos,${data.totalOrders}\n`;
   csv += `Ticket Médio,R$ ${data.avgOrderValue.toFixed(2)}\n`;
-  csv += `Cancelados,${data.cancelledOrders}\n`;
-  csv += `Descontos,R$ ${data.totalDiscounts.toFixed(2)}\n\n`;
+  csv += `Taxas de Entrega,R$ ${data.totalDeliveryFees.toFixed(2)}\n`;
+  csv += `Descontos,R$ ${data.totalDiscounts.toFixed(2)}\n`;
+  csv += `Cancelados,${data.cancelledOrders}\n\n`;
+
   csv += 'Vendas por Dia\n';
   csv += 'Data,Pedidos,Faturamento\n';
   if (data.dailySales) data.dailySales.forEach(d => {
     csv += `${d.date},${d.orders},R$ ${d.revenue.toFixed(2)}\n`;
   });
+
   csv += '\nProdutos Mais Vendidos\n';
   csv += 'Produto,Quantidade,Faturamento\n';
   if (data.topProducts) data.topProducts.forEach(p => {
     csv += `"${p.name}",${p.quantity},R$ ${p.revenue.toFixed(2)}\n`;
   });
+
+  csv += '\nFormas de Pagamento\n';
+  csv += 'Método,Pedidos,Faturamento\n';
+  if (data.paymentBreakdown) data.paymentBreakdown.forEach(p => {
+    csv += `${paymentLabels[p.method] || p.method},${p.orders},R$ ${p.revenue.toFixed(2)}\n`;
+  });
+
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = 'relatorio_vendas.csv';
+  link.download = `relatorio_vendas_${new Date().toISOString().split('T')[0]}.csv`;
   link.click();
 });
 
-loadReport();
+// Load default (last 30 days)
+const defaultDates = getDateRange('30');
+document.getElementById('dateFrom').value = defaultDates.from;
+document.getElementById('dateTo').value = defaultDates.to;
+loadReport(defaultDates.from, defaultDates.to);
 </script>

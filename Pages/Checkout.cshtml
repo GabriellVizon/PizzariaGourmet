@@ -90,7 +90,7 @@
             <div class="pix-qr-placeholder">
               <div class="pix-qr-box" id="pix-qr-box"></div>
               <p class="pix-instruction">Escaneie o código QR abaixo com seu aplicativo do banco</p>
-              <span class="pix-key-text">contato@pizzariagourmet.com</span>
+              <span class="pix-key-text">contato@dompizzaria.com</span>
               <p style="font-size:0.8rem;color:var(--text-light);margin-top:8px">⏳ O pagamento será confirmado manualmente após a transferência.</p>
             </div>
           </div>
@@ -373,8 +373,8 @@ function renderCheckoutSummary() {
   }
 
   function generatePixPayload(total) {
-    const pixKey = typeof PIX_KEY !== 'undefined' ? PIX_KEY : 'contato@pizzariagourmet.com';
-    const storeName = typeof STORE_NAME !== 'undefined' ? STORE_NAME.substring(0, 25) : 'PizzariaGourmet';
+    const pixKey = typeof PIX_KEY !== 'undefined' ? PIX_KEY : 'contato@dompizzaria.com';
+    const storeName = typeof STORE_NAME !== 'undefined' ? STORE_NAME.substring(0, 25) : 'DomPizzaria';
     const amount = total.toFixed(2);
 
     let payload = '000201';

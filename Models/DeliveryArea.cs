@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace PizzariaGourmet.Models;
+namespace DomPizzaria.Models;
 
 public class DeliveryArea
 {

@@ -16,12 +16,6 @@
 
   <p id="success-message" class="success-details">Processando...</p>
 
-  <div id="tracking-link-box" style="display:none;margin-top:12px">
-    <a id="tracking-link" class="btn-home" style="background:var(--accent);border-color:var(--accent);display:inline-flex;align-items:center;gap:8px">
-      📦 Acompanhar Pedido
-    </a>
-  </div>
-
   <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:var(--radius-sm);display:inline-block">
     <p style="margin:0 0 8px;font-weight:600">📞 Precisa de ajuda?</p>
     <a id="whatsapp-help-link" href="https://wa.me/5524992206707" style="color:var(--brand);font-weight:700;text-decoration:none">Fale conosco no WhatsApp</a>
@@ -29,7 +23,6 @@
 
   <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
     <a href="/" class="btn-home">← Voltar ao Cardápio</a>
-    <a href="/Historico" class="btn-home" style="background:var(--accent);border-color:var(--accent)">📋 Meus Pedidos</a>
   </div>
 </div>
 
@@ -51,8 +44,6 @@ const shortId = orderId ? '#' + orderId.slice(0, 8) : '';
 if (shortId) {
   document.getElementById('order-number-box').style.display = 'block';
   document.getElementById('order-number-display').textContent = shortId;
-  document.getElementById('tracking-link-box').style.display = 'block';
-  document.getElementById('tracking-link').href = '/Rastreio?PedidoId=' + orderId;
   document.getElementById('whatsapp-help-link').href = 'https://wa.me/5524992206707?text=Oi!%20Preciso%20de%20ajuda%20com%20o%20pedido%20' + encodeURIComponent(shortId);
 }
 

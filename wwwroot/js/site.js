@@ -2,8 +2,8 @@ let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 let DELIVERY_FEE = 5.00;
 let FREE_DELIVERY_MIN = 50.00;
 let WHATSAPP = '5524992206707';
-let PIX_KEY = 'contato@pizzariagourmet.com';
-let STORE_NAME = 'Pizzaria Gourmet';
+let PIX_KEY = 'contato@dompizzaria.com';
+let STORE_NAME = 'Dom Pizzaria';
 const MAX_COMPLEMENTS = 3;
 
 const productsEl = document.getElementById('products');

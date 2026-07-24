@@ -53,21 +53,6 @@
         <div style="font-weight:700;color:var(--text)">Cupons</div>
         <div style="font-size:0.8rem;color:var(--text-light)">Gerenciar descontos</div>
       </a>
-      <a href="/Admin/Customers" class="admin-panel" style="display:block;text-align:center;text-decoration:none;cursor:pointer;transition:var(--transition)">
-        <div style="font-size:2rem;margin-bottom:4px">👥</div>
-        <div style="font-weight:700;color:var(--text)">Clientes</div>
-        <div style="font-size:0.8rem;color:var(--text-light)">Cadastro e histórico</div>
-      </a>
-      <a href="/Admin/DeliveryAreas" class="admin-panel" style="display:block;text-align:center;text-decoration:none;cursor:pointer;transition:var(--transition)">
-        <div style="font-size:2rem;margin-bottom:4px">📍</div>
-        <div style="font-weight:700;color:var(--text)">Áreas</div>
-        <div style="font-size:0.8rem;color:var(--text-light)">Regiões de entrega</div>
-      </a>
-      <a href="/Admin/DeliveryPersons" class="admin-panel" style="display:block;text-align:center;text-decoration:none;cursor:pointer;transition:var(--transition)">
-        <div style="font-size:2rem;margin-bottom:4px">🏍️</div>
-        <div style="font-weight:700;color:var(--text)">Entregadores</div>
-        <div style="font-size:0.8rem;color:var(--text-light)">Gerenciar entregas</div>
-      </a>
       <a href="/Admin/Reports" class="admin-panel" style="display:block;text-align:center;text-decoration:none;cursor:pointer;transition:var(--transition)">
         <div style="font-size:2rem;margin-bottom:4px">📊</div>
         <div style="font-weight:700;color:var(--text)">Relatórios</div>
@@ -114,8 +99,8 @@ async function checkNewOrders() {
     const data = await res.json();
     if (data.count > 0) {
       playNewOrderSound();
-      document.title = '\u{1F514} Novo Pedido! - Pizzaria Gourmet';
-      setTimeout(() => document.title = 'Painel Admin - Pizzaria Gourmet', 5000);
+      document.title = '\u{1F514} Novo Pedido! - Dom Pizzaria';
+      setTimeout(() => document.title = 'Painel Admin - Dom Pizzaria', 5000);
     }
     if (data.timestamp) lastCheck = data.timestamp;
   } catch (e) {

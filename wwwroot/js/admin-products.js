@@ -1,20 +1,45 @@
 let editingSizes = [];
 
-function renderSizeEditor(sizes) {
-  const container = document.getElementById('size-editor');
-  editingSizes = sizes.length > 0 ? [...sizes] : [{ name: 'P', diameter: 30, price: 0 }, { name: 'M', diameter: 40, price: 0 }, { name: 'G', diameter: 50, price: 0 }];
+const PIZZA_SIZES = [
+  { name: 'P', diameter: 30, price: 0 },
+  { name: 'M', diameter: 40, price: 0 },
+  { name: 'G', diameter: 50, price: 0 }
+];
+
+const BEBIDA_SIZES = [
+  { name: '300ml', diameter: null, price: 0 },
+  { name: '500ml', diameter: null, price: 0 },
+  { name: '1L', diameter: null, price: 0 }
+];
+
+function getDefaultSizes(category) {
+  if (category === 'Bebida') return [...BEBIDA_SIZES];
+  if (category === 'Clássica' || category === 'Especial' || category === 'Premium') return [...PIZZA_SIZES];
+  return [];
+}
+
+function isBebidaCategory() {
+  const sel = document.querySelector('[name="category"]');
+  return sel && sel.value === 'Bebida';
+}
+
+function renderSizeEditor(sizes, category) {
+  const cat = category || document.querySelector('[name="category"]')?.value || '';
+  editingSizes = sizes.length > 0 ? [...sizes] : getDefaultSizes(cat);
   renderSizeRows();
 }
 
 function renderSizeRows() {
   const container = document.getElementById('size-editor');
+  const showDiameter = !isBebidaCategory();
+
   container.innerHTML = `
     <div style="margin-bottom:8px"><strong>Tamanhos</strong> <small style="color:var(--text-light)">(deixe vazio se não tiver tamanhos)</small></div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:8px">
       <thead>
         <tr>
           <th style="text-align:left;font-size:0.75rem;padding:4px 8px">Nome</th>
-          <th style="text-align:left;font-size:0.75rem;padding:4px 8px">Diâmetro (cm)</th>
+          ${showDiameter ? '<th style="text-align:left;font-size:0.75rem;padding:4px 8px">Diâmetro (cm)</th>' : ''}
           <th style="text-align:left;font-size:0.75rem;padding:4px 8px">Preço (R$)</th>
           <th style="width:36px"></th>
         </tr>
@@ -22,8 +47,8 @@ function renderSizeRows() {
       <tbody>
         ${editingSizes.map((s, i) => `
           <tr>
-            <td><input name="size_name_${i}" value="${s.name}" style="width:60px" placeholder="P" /></td>
-            <td><input name="size_diameter_${i}" value="${s.diameter || ''}" type="number" style="width:70px" placeholder="30" /></td>
+            <td><input name="size_name_${i}" value="${s.name}" style="width:80px" placeholder="${isBebidaCategory() ? '500ml' : 'P'}" /></td>
+            ${showDiameter ? `<td><input name="size_diameter_${i}" value="${s.diameter || ''}" type="number" style="width:70px" placeholder="30" /></td>` : `<input type="hidden" name="size_diameter_${i}" value="" />`}
             <td><input name="size_price_${i}" value="${s.price}" type="number" step="0.01" style="width:80px" placeholder="0" /></td>
             <td><button type="button" onclick="removeSize(${i})" style="background:#e74c3c;padding:4px 8px;font-size:0.8rem">✕</button></td>
           </tr>
@@ -100,7 +125,7 @@ async function loadAdminProducts() {
       if (form.elements['category']) form.elements['category'].value = p.category || '';
       if (form.elements['available']) form.elements['available'].checked = p.available !== false;
       const sizes = p.sizesJson ? JSON.parse(p.sizesJson) : [];
-      renderSizeEditor(sizes);
+      renderSizeEditor(sizes, p.category);
     }));
 
     document.querySelectorAll('.btn-del').forEach(b => b.addEventListener('click', async (e) => {
@@ -137,6 +162,19 @@ document.getElementById('image-file')?.addEventListener('change', async (e) => {
   }
 });
 
+// Category change listener - update size defaults
+document.querySelector('[name="category"]')?.addEventListener('change', (e) => {
+  const cat = e.target.value;
+  const currentSizes = collectSizes();
+
+  if (currentSizes.length === 0) {
+    editingSizes = getDefaultSizes(cat);
+    renderSizeRows();
+  } else {
+    renderSizeRows();
+  }
+});
+
 document.getElementById('product-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = e.target;
@@ -161,7 +199,8 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
       await req('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     }
     f.reset();
-    renderSizeEditor([]);
+    editingSizes = [];
+    document.getElementById('size-editor').innerHTML = '';
     loadAdminProducts();
   } catch (err) {
     alert('Erro ao salvar produto');
@@ -170,7 +209,8 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
 
 document.getElementById('reset-form')?.addEventListener('click', () => {
   document.getElementById('product-form').reset();
-  renderSizeEditor([]);
+  editingSizes = [];
+  document.getElementById('size-editor').innerHTML = '';
 });
 
 loadAdminProducts();

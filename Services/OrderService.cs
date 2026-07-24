@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using PizzariaGourmet.Data;
-using PizzariaGourmet.Models;
+using DomPizzaria.Data;
+using DomPizzaria.Models;
 
-namespace PizzariaGourmet.Services;
+namespace DomPizzaria.Services;
 
 public class OrderService
 {

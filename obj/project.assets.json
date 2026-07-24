@@ -2645,9 +2645,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\Programazione\\PizzariaGourmet\\PizzariaGourmet.csproj",
-      "projectName": "PizzariaGourmet",
-      "projectPath": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\Programazione\\PizzariaGourmet\\PizzariaGourmet.csproj",
+      "projectUniqueName": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\Programazione\\PizzariaGourmet\\DomPizzaria.csproj",
+      "projectName": "DomPizzaria",
+      "projectPath": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\Programazione\\PizzariaGourmet\\DomPizzaria.csproj",
       "packagesPath": "C:\\Users\\gabri\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\gabri\\OneDrive\\Área de Trabalho\\Programazione\\PizzariaGourmet\\obj\\",
       "projectStyle": "PackageReference",
@@ -3137,5 +3137,17 @@
         }
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "O pacote 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 tem uma alta vulnerabilidade de gravidade conhecida, https://github.com/advisories/GHSA-2m69-gcr7-jv3q",
+      "libraryId": "SQLitePCLRaw.lib.e_sqlite3",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
 }
